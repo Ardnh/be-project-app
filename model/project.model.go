@@ -4,9 +4,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type Project struct {
+type Projects struct {
 	ID          uuid.UUID
 	CategoryID  uuid.UUID
+	UserID      uuid.UUID
 	Name        string
 	Description string
 	Budget      int
@@ -22,6 +23,7 @@ type ProjectItem struct {
 
 type CreateProjectRequest struct {
 	CategoryID  uuid.UUID
+	UserID      uuid.UUID
 	Name        string
 	Description string
 	Budget      int
@@ -29,6 +31,7 @@ type CreateProjectRequest struct {
 
 type UpdateProjectRequest struct {
 	CategoryID  uuid.UUID
+	UserID      uuid.UUID
 	Name        string
 	Description string
 	Budget      int

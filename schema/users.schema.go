@@ -9,7 +9,7 @@ type Users struct {
 	Username string
 	Email    string
 	Password string
-	Projects []Project
+	Projects []Projects
 }
 
 type UserProfile struct {
