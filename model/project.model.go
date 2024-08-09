@@ -1,15 +1,49 @@
 package model
 
 import (
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type Project struct {
-	*gorm.Model
-	CategoryID   uint
-	Category     Category `gorm:"foreignKey:CategoryID"`
-	Name         string   `gorm:"type:varchar(100)"`
-	Description  string   `gorm:"type:text"`
-	Budget       int
-	ProjectItems []ProjectItem
+	ID          uuid.UUID
+	CategoryID  uuid.UUID
+	Name        string
+	Description string
+	Budget      int
+}
+
+type ProjectItem struct {
+	ID         uuid.UUID
+	ProjectID  uuid.UUID
+	Name       string
+	BudgetItem int
+	Status     bool
+}
+
+type CreateProjectRequest struct {
+	CategoryID  uuid.UUID
+	Name        string
+	Description string
+	Budget      int
+}
+
+type UpdateProjectRequest struct {
+	CategoryID  uuid.UUID
+	Name        string
+	Description string
+	Budget      int
+}
+
+type CreateProjectItem struct {
+	ProjectID  uuid.UUID
+	Name       string
+	BudgetItem int
+	Status     bool
+}
+
+type UpdateProjectItem struct {
+	ProjectID  uuid.UUID
+	Name       string
+	BudgetItem int
+	Status     bool
 }

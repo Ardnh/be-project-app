@@ -1,15 +1,17 @@
 package schema
 
 import (
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type Project struct {
-	*gorm.Model
-	CategoryID   uint
+	ID           uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
+	CategoryID   uuid.UUID
 	Category     Category `gorm:"foreignKey:CategoryID"`
-	Name         string   `gorm:"type:varchar(100)"`
-	Description  string   `gorm:"type:text"`
+	UserID       uuid.UUID
+	Users        Users  `gorm:"foreignKey:UserID"`
+	Name         string `gorm:"type:varchar(100)"`
+	Description  string `gorm:"type:text"`
 	Budget       int
 	ProjectItems []ProjectItem
 }

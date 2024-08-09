@@ -1,8 +1,8 @@
 package schema
 
-import "gorm.io/gorm"
+import "github.com/google/uuid"
 
 type Category struct {
-	*gorm.Model
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
 	Name string
 }
