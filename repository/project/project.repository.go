@@ -154,31 +154,44 @@ func (repository *ProjectRepositoryImpl) GetAllProject(ctx *fiber.Ctx, page int,
 
 func (repository *ProjectRepositoryImpl) CreateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error {
 
-	tx := repository.Db.Begin()
+	tx := repository.Db.WithContext(ctx.Context()).Begin()
 	defer helper.CommitOrRollback(tx)
 
-	err := tx.
-		WithContext(ctx.Context()).
-		Table(projectItemTableName).
-		Create(req).
+	// 1. Insert new project item to project_item table
+	if err := tx.Table(projectItemTableName).Create(req).Error; err != nil {
+		return err
+	}
+
+	// 2. Update current budget langsung di table projects tanpa mengambil data project terlebih dahulu
+	if err := tx.Table(projectTableName).
+		Where("id = ? AND budget >= ?", req.ProjectID, req.BudgetItem).
+		UpdateColumn("budget", gorm.Expr("budget - ?", req.BudgetItem)).
+		Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repository *ProjectRepositoryImpl) UpdateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error {
+
+	tx := repository.Db.WithContext(ctx.Context()).Begin()
+	defer helper.CommitOrRollback(tx)
+
+	var oldProjectItem model.ProjectItem
+
+	// 1. Get the old project item to calculate the budget difference
+	err := tx.Table(projectItemTableName).
+		Where("id = ?", req.ID).
+		First(&oldProjectItem).
 		Error
 
 	if err != nil {
 		return err
 	}
 
-	return nil
-
-}
-
-func (repository *ProjectRepositoryImpl) UpdateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error {
-
-	tx := repository.Db.Begin()
-	defer helper.CommitOrRollback(tx)
-
-	err := tx.
-		WithContext(ctx.Context()).
-		Table(projectItemTableName).
+	// 2. Update project item with the new data
+	err = tx.Table(projectItemTableName).
 		Where("id = ?", req.ID).
 		Updates(req).
 		Error
@@ -187,23 +200,50 @@ func (repository *ProjectRepositoryImpl) UpdateProjectItem(ctx *fiber.Ctx, req *
 		return err
 	}
 
-	return nil
+	// 3. Calculate the budget difference
+	budgetDifference := req.BudgetItem - oldProjectItem.BudgetItem
 
+	// 4. Update the project's budget in the projects table
+	err = tx.Table(projectTableName).
+		Where("id = ?", req.ProjectID).
+		UpdateColumn("budget", gorm.Expr("budget + ?", budgetDifference)).
+		Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (repository *ProjectRepositoryImpl) DeleteProjectItem(ctx *fiber.Ctx, req uuid.UUID) error {
 
-	tx := repository.Db.Begin()
+	tx := repository.Db.WithContext(ctx.Context()).Begin()
 	defer helper.CommitOrRollback(tx)
 
-	errDeleteProjectItem := tx.
-		WithContext(ctx.Context()).
-		Table(projectItemTableName).
-		Delete(&model.ProjectItem{}, req).
-		Error
+	var projectItem model.ProjectItem
 
-	if errDeleteProjectItem != nil {
-		return errDeleteProjectItem
+	// 1. Ambil project item berdasarkan req
+	if err := tx.Table(projectItemTableName).
+		Where("id = ?", req).
+		First(&projectItem).
+		Error; err != nil {
+		return err
+	}
+
+	// 2. Jika budget pada project item tidak 0, tambahkan budget pada project item ke parent project
+	if projectItem.BudgetItem != 0 {
+		if err := tx.Table(projectTableName).
+			Where("id = ?", projectItem.ProjectID).
+			UpdateColumn("budget", gorm.Expr("budget + ?", projectItem.BudgetItem)).
+			Error; err != nil {
+			return err
+		}
+	}
+
+	// 3. Hapus project item
+	if err := tx.Delete(&projectItem).Error; err != nil {
+		return err
 	}
 
 	return nil
