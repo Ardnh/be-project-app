@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"project-app/handler/category"
+	proeject "project-app/handler/project"
 	"project-app/handler/users"
 	"project-app/helper"
 
@@ -21,6 +22,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, validate *validator.Validate) {
 
 	userHandler := users.NewUsersHandler(db, validate)
 	categoryHandler := category.NewCategoryHandler(db, validate)
+	projectHandler := proeject.NewProjectHandler(db, validate)
 
 	appGroup := app.Group("/api/v1")
 
@@ -41,4 +43,17 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, validate *validator.Validate) {
 	categoryGroup.Delete("/:id", categoryHandler.Delete)
 	categoryGroup.Get("/", categoryHandler.FindAll)
 
+	// Project
+	projectGroup := appGroup.Group("projects")
+	projectGroup.Post("/", projectHandler.CreateProject)
+	projectGroup.Put("/:id", projectHandler.UpdateProject)
+	projectGroup.Delete("/:id", projectHandler.DeleteProject)
+	projectGroup.Get("/", projectHandler.GetAllProject)
+
+	// Project item
+	projectItemGroup := appGroup.Group("project-item")
+	projectItemGroup.Post("/", projectHandler.CreateProjectItem)
+	projectGroup.Put("/:id", projectHandler.UpdateProjectItem)
+	projectGroup.Delete("/:id", projectHandler.DeleteProjectItem)
+	projectGroup.Get("/:project_id", projectHandler.GetAllProjectItemByProjectId)
 }

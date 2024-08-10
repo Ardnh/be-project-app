@@ -19,7 +19,7 @@ type ProjectRepository interface {
 	CreateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error
 	UpdateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error
 	DeleteProjectItem(ctx *fiber.Ctx, req uuid.UUID) error
-	GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string) (*[]model.ProjectItem, int64, error)
+	GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*[]model.ProjectItem, int64, error)
 }
 
 type ProjectRepositoryImpl struct {
@@ -249,11 +249,7 @@ func (repository *ProjectRepositoryImpl) DeleteProjectItem(ctx *fiber.Ctx, req u
 	return nil
 }
 
-func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string) (*[]model.ProjectItem, int64, error) {
-
-	tx := repository.Db.Begin()
-	defer helper.CommitOrRollback(tx)
-
+func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*[]model.ProjectItem, int64, error) {
 	var projectItems []model.ProjectItem
 	var totalCount int64
 
@@ -261,34 +257,33 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 	offset := (page - 1) * pageSize
 
 	// Query
-	query := tx.WithContext(ctx.Context()).Table(projectItemTableName)
+	query := repository.Db.WithContext(ctx.Context()).Table(projectItemTableName).
+		Where("project_id = ?", projectID).
+		Offset(offset).
+		Limit(pageSize)
 
 	if projectItemName != "" {
-		query = query.Where("name LIKE ? ", "%"+projectItemName+"%")
-	}
-
-	err := query.Count(&totalCount).Error
-	if err != nil {
-		return nil, 0, err
+		query = query.Where("name LIKE ?", "%"+projectItemName+"%")
 	}
 
 	// Sorting by budget
-	if sortOrder == "asc" {
+	switch sortOrder {
+	case "asc":
 		query = query.Order("budget ASC")
-	} else if sortOrder == "desc" {
+	case "desc":
 		query = query.Order("budget DESC")
-	} else {
+	default:
 		query = query.Order("budget ASC") // Default sorting
 	}
 
-	errResult := query.
-		Offset(offset).
-		Limit(pageSize).
-		Find(&projectItems).
-		Error
+	// Count total items
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
 
-	if errResult != nil {
-		return nil, 0, errResult
+	// Fetch data
+	if err := query.Find(&projectItems).Error; err != nil {
+		return nil, 0, err
 	}
 
 	if len(projectItems) == 0 {

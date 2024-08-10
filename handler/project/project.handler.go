@@ -48,7 +48,7 @@ func NewProjectHandler(db *gorm.DB, validate *validator.Validate) ProjectHandler
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /projects [post]
-// @Security Bearer
+
 func (handler *ProjectHandlerImpl) CreateProject(c *fiber.Ctx) error {
 
 	// Read body request
@@ -93,6 +93,18 @@ func (handler *ProjectHandlerImpl) CreateProject(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateProject godoc
+// @Summary Update an existing project
+// @Description Update the details of an existing project by ID
+// @Tags Projects
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Project ID"
+// @Param project body model.UpdateProjectRequest true "Update Project Request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /projects/{id} [put]
 func (handler *ProjectHandlerImpl) UpdateProject(c *fiber.Ctx) error {
 
 	// Read body request
@@ -150,11 +162,21 @@ func (handler *ProjectHandlerImpl) UpdateProject(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"code":    fiber.StatusOK,
-		"message": "Successfully update category",
+		"message": "Successfully update project",
 	})
-
 }
 
+// DeleteProject godoc
+// @Summary Delete an existing project
+// @Description Delete the project by its ID
+// @Tags Projects
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Project ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /projects/{id} [delete]
 func (handler *ProjectHandlerImpl) DeleteProject(c *fiber.Ctx) error {
 
 	idString := c.Params("id", "")
@@ -189,6 +211,20 @@ func (handler *ProjectHandlerImpl) DeleteProject(c *fiber.Ctx) error {
 	})
 }
 
+// GetAllProject godoc
+// @Summary Get all projects with pagination, sorting, and filtering
+// @Description Retrieve a paginated list of projects with optional sorting and filtering by project name and category name
+// @Tags Projects
+// @Accept  json
+// @Produce  json
+// @Param page query int false "Page number" default(1)
+// @Param pageSize query int false "Number of items per page" default(10)
+// @Param projectName query string false "Filter by project name"
+// @Param sortDirection query string false "Sort order (asc or desc)" default(asc)
+// @Param categoryName query string false "Filter by category name"
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /projects [get]
 func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 
 	page := c.Query("page", "1")
@@ -215,7 +251,7 @@ func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"code":       fiber.StatusOK,
-		"message":    "Successfully get category",
+		"message":    "Successfully get projects",
 		"page":       page,
 		"pageSize":   pageSize,
 		"total":      totalItem,
@@ -224,6 +260,17 @@ func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 	})
 }
 
+// CreateProjectItem godoc
+// @Summary Create a new project item
+// @Description Create a new item within an existing project
+// @Tags ProjectItems
+// @Accept  json
+// @Produce  json
+// @Param projectItem body model.CreateProjectItem true "Create Project Item Request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /project-item [post]
 func (handler *ProjectHandlerImpl) CreateProjectItem(c *fiber.Ctx) error {
 
 	var request model.CreateProjectItem
@@ -262,9 +309,20 @@ func (handler *ProjectHandlerImpl) CreateProjectItem(c *fiber.Ctx) error {
 		"code":    fiber.StatusOK,
 		"message": "Successfully created project item",
 	})
-
 }
 
+// UpdateProjectItem godoc
+// @Summary Update an existing project item
+// @Description Update the details of an existing project item by ID
+// @Tags ProjectItems
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Project Item ID"
+// @Param projectItem body model.UpdateProjectItem true "Update Project Item Request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /project-item/{id} [put]
 func (handler *ProjectHandlerImpl) UpdateProjectItem(c *fiber.Ctx) error {
 
 	// Read body request
@@ -320,10 +378,18 @@ func (handler *ProjectHandlerImpl) UpdateProjectItem(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"code":    fiber.StatusOK,
-		"message": "Successfully update project item",
+		"message": "Successfully updated project item",
 	})
 }
 
+// @Summary Delete a project item
+// @Description Delete a specific project item by its ID
+// @Tags Project
+// @Param id path string true "Project Item ID"
+// @Success 200 {object} map[string]interface{} "Successfully deleted the project item"
+// @Failure 400 {object} map[string]interface{} "Invalid ID or error parsing ID"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /project-item/{id} [delete]
 func (handler *ProjectHandlerImpl) DeleteProjectItem(c *fiber.Ctx) error {
 
 	idString := c.Params("id", "")
@@ -357,6 +423,16 @@ func (handler *ProjectHandlerImpl) DeleteProjectItem(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Get all project items by project ID
+// @Description Retrieve all items associated with a specific project, with pagination, sorting, and filtering options.
+// @Tags Project
+// @Param page query int false "Page number" default(1)
+// @Param pageSize query int false "Number of items per page" default(10)
+// @Param projectName query string false "Filter by project name"
+// @Param sortDirection query string false "Sort order, either 'asc' or 'desc'" default(asc)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved project items"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /project-item/{project_id} [get]
 func (handler *ProjectHandlerImpl) GetAllProjectItemByProjectId(c *fiber.Ctx) error {
 
 	page := c.Query("page", "1")
@@ -365,8 +441,24 @@ func (handler *ProjectHandlerImpl) GetAllProjectItemByProjectId(c *fiber.Ctx) er
 	pageSizeInt, _ := strconv.Atoi(pageSize)
 	projectName := c.Query("projectName", "")
 	sortOrder := c.Query("sortDirection", "asc")
+	idString := c.Params("id", "")
+	uuidID, err := uuid.Parse(idString)
 
-	projectItems, totalItem, errResult := handler.ProjectRepository.GetAllProjectItemByProjectId(c, pageInt, pageSizeInt, sortOrder, projectName)
+	if idString == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"code":    fiber.StatusBadRequest,
+			"message": "Invalid ID",
+		})
+	}
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"code":    fiber.StatusBadRequest,
+			"message": "Error parsing id",
+		})
+	}
+
+	projectItems, totalItem, errResult := handler.ProjectRepository.GetAllProjectItemByProjectId(c, pageInt, pageSizeInt, sortOrder, projectName, uuidID)
 
 	if errResult != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
