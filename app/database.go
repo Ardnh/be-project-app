@@ -17,9 +17,9 @@ func DbConnection() *gorm.DB {
 	helper.PanicIfError(err)
 
 	db.AutoMigrate(
-		&schema.Category{},
+		&schema.Categories{},
 		&schema.Users{},
-		&schema.Project{},
+		&schema.Projects{},
 		&schema.ProjectItem{},
 	)
 

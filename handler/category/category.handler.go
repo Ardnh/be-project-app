@@ -212,7 +212,7 @@ func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
 	}
 
 	totalPages := int(totalEntries) / pageSizeInt
-	if int(totalEntries)%pageSizeInt > 0 { // Tambahkan satu halaman jika ada sisa pembagian
+	if int(totalEntries)%pageSizeInt > 0 {
 		totalPages++
 	}
 
