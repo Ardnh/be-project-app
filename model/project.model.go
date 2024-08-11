@@ -50,3 +50,8 @@ type UpdateProjectItem struct {
 	BudgetItem int
 	Status     bool
 }
+
+type ProjectItemResponse struct {
+	Items   []ProjectItem
+	Project Projects
+}
