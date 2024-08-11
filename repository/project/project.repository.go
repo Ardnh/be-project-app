@@ -19,7 +19,7 @@ type ProjectRepository interface {
 	CreateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error
 	UpdateProjectItem(ctx *fiber.Ctx, req *model.ProjectItem) error
 	DeleteProjectItem(ctx *fiber.Ctx, req uuid.UUID) error
-	GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*[]model.ProjectItem, int64, error)
+	GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*model.ProjectItemResponse, int64, error)
 }
 
 type ProjectRepositoryImpl struct {
@@ -249,9 +249,17 @@ func (repository *ProjectRepositoryImpl) DeleteProjectItem(ctx *fiber.Ctx, req u
 	return nil
 }
 
-func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*[]model.ProjectItem, int64, error) {
+func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*model.ProjectItemResponse, int64, error) {
 	var projectItems []model.ProjectItem
 	var totalCount int64
+	var projectItemDetails model.ProjectItemResponse
+
+	// Get project
+	if err := repository.Db.WithContext(ctx.Context()).Table(projectTableName).
+		Where("id = ?", projectID).
+		First(&projectItemDetails.Project).Error; err != nil {
+		return nil, 0, err
+	}
 
 	// Offset
 	offset := (page - 1) * pageSize
@@ -282,7 +290,7 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 	}
 
 	// Fetch data
-	if err := query.Find(&projectItems).Error; err != nil {
+	if err := query.Find(&projectItemDetails.Items).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -290,5 +298,5 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 		return nil, 0, errors.New("Project Item Not Found")
 	}
 
-	return &projectItems, totalCount, nil
+	return &projectItemDetails, totalCount, nil
 }

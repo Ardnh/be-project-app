@@ -14,12 +14,16 @@ definitions:
     required:
     - name
     type: object
-  model.FollowUserCreateRequest:
+  model.CreateProjectItem:
     properties:
-      following:
+      budgetItem:
         type: integer
-      userId:
-        type: integer
+      name:
+        type: string
+      projectID:
+        type: string
+      status:
+        type: boolean
     type: object
   model.LoginRequest:
     properties:
@@ -52,12 +56,29 @@ definitions:
       username:
         type: string
     type: object
-  model.UnfollowUserRequest:
+  model.UpdateProjectItem:
     properties:
-      unfollow:
+      budgetItem:
         type: integer
-      userId:
+      name:
+        type: string
+      projectID:
+        type: string
+      status:
+        type: boolean
+    type: object
+  model.UpdateProjectRequest:
+    properties:
+      budget:
         type: integer
+      categoryID:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      userID:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -65,8 +86,8 @@ info:
     email: ardn.h79@gmail.com
     name: Muhammad Ardan Hilal
     url: ardn.h79@gmail.com
-  description: API Documentation for Todolist API.
-  title: Todolist API
+  description: API Documentation for Project APP API.
+  title: Project APP API
   version: "1.0"
 paths:
   /category:
@@ -214,39 +235,56 @@ paths:
       summary: Delete category
       tags:
       - Category
-  /user/followers/{user_id}:
-    get:
+  /project-item:
+    post:
       consumes:
       - application/json
-      description: Find follower by user id
+      description: Create a new item within an existing project
       parameters:
-      - description: user_id
-        in: path
-        name: user_id
+      - description: Create Project Item Request
+        in: body
+        name: projectItem
         required: true
-        type: string
-      - description: page
-        in: path
-        name: page
-        type: string
-      - description: pageSize
-        in: path
-        name: pageSize
-        type: string
-      - description: username
-        in: path
-        name: username
-        type: string
+        schema:
+          $ref: '#/definitions/model.CreateProjectItem'
       produces:
       - application/json
       responses:
         "200":
-          description: Success update category
+          description: OK
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: Invalid request body or missing required fields
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a new project item
+      tags:
+      - ProjectItems
+  /project-item/{id}:
+    delete:
+      description: Delete a specific project item by its ID
+      parameters:
+      - description: Project Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Successfully deleted the project item
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid ID or error parsing ID
           schema:
             additionalProperties: true
             type: object
@@ -255,11 +293,199 @@ paths:
           schema:
             additionalProperties: true
             type: object
-      security:
-      - Bearer: []
-      summary: Find follower by user id
+      summary: Delete a project item
       tags:
-      - Following / Followers
+      - Project
+    put:
+      consumes:
+      - application/json
+      description: Update the details of an existing project item by ID
+      parameters:
+      - description: Project Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Project Item Request
+        in: body
+        name: projectItem
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProjectItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update an existing project item
+      tags:
+      - ProjectItems
+  /project-item/{project_id}:
+    get:
+      description: Retrieve all items associated with a specific project, with pagination,
+        sorting, and filtering options.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: pageSize
+        type: integer
+      - description: Filter by project name
+        in: query
+        name: projectName
+        type: string
+      - default: asc
+        description: Sort order, either 'asc' or 'desc'
+        in: query
+        name: sortDirection
+        type: string
+      responses:
+        "200":
+          description: Successfully retrieved project items
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all project items by project ID
+      tags:
+      - Project
+  /projects:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of projects with optional sorting and
+        filtering by project name and category name
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: pageSize
+        type: integer
+      - description: Filter by project name
+        in: query
+        name: projectName
+        type: string
+      - default: asc
+        description: Sort order (asc or desc)
+        in: query
+        name: sortDirection
+        type: string
+      - description: Filter by category name
+        in: query
+        name: categoryName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all projects with pagination, sorting, and filtering
+      tags:
+      - Projects
+  /projects/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the project by its ID
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete an existing project
+      tags:
+      - Projects
+    put:
+      consumes:
+      - application/json
+      description: Update the details of an existing project by ID
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Project Request
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update an existing project
+      tags:
+      - Projects
   /user/following:
     get:
       consumes:
@@ -292,79 +518,6 @@ paths:
       summary: Find user profile by id
       tags:
       - Users
-    post:
-      consumes:
-      - application/json
-      description: Create follow user by id
-      parameters:
-      - description: Follow user by id
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/model.FollowUserCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success update category
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request body or missing required fields
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Create follow user by id
-      tags:
-      - Following / Followers
-  /user/following/:userId:
-    get:
-      consumes:
-      - application/json
-      description: Find following by user id
-      parameters:
-      - description: page
-        in: path
-        name: page
-        type: string
-      - description: pageSize
-        in: path
-        name: pageSize
-        type: string
-      - description: username
-        in: path
-        name: username
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success update category
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request body or missing required fields
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - Bearer: []
-      summary: Find following by user id
-      tags:
-      - Following / Followers
   /user/login:
     post:
       consumes:
@@ -498,39 +651,6 @@ paths:
       summary: Register user
       tags:
       - Users
-  /user/unfollow:
-    delete:
-      consumes:
-      - application/json
-      description: Unfollow user
-      parameters:
-      - description: Unfollow user
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/model.UnfollowUserRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success update category
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request body or missing required fields
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Unfollow user
-      tags:
-      - Following / Followers
 securityDefinitions:
   Bearer:
     in: header
