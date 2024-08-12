@@ -234,6 +234,12 @@ func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 	projectName := c.Query("projectName", "")
 	sortOrder := c.Query("sortDirection", "asc")
 	categoryName := c.Query("categoryName", "")
+	search := c.Query("search", "")
+	sortBy := c.Query("sortBy", "")
+
+	// TODO
+	// 1. tambahkan pencarian by nama project
+	// 2. tambahkan sort by
 
 	projects, totalItem, errResult := handler.ProjectRepository.GetAllProject(c, pageInt, pageSizeInt, sortOrder, projectName, categoryName)
 
@@ -250,13 +256,23 @@ func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":       fiber.StatusOK,
-		"message":    "Successfully get projects",
-		"page":       page,
-		"pageSize":   pageSize,
-		"total":      totalItem,
-		"totalPages": totalPages,
-		"data":       projects,
+		"code":    fiber.StatusOK,
+		"message": "Successfully get projects",
+		"data": fiber.Map{
+			"items": projects,
+			"pagination": fiber.Map{
+				"currentPage":  page,
+				"itemsPerPage": pageSize,
+				"totalItems":   totalItem,
+				"totalPages":   totalPages,
+			},
+			"filters": fiber.Map{
+				"category":  categoryName,
+				"search":    search,
+				"sortBy":    sortBy,
+				"sortOrder": sortOrder,
+			},
+		},
 	})
 }
 

@@ -6,10 +6,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 var secretKey = []byte(os.Getenv("JWT_SECRECT_KEY"))
-var UserId uint
+var UserId uuid.UUID
 
 func GenerateToken(userId uint) (string, error) {
 
@@ -57,8 +58,18 @@ func VerifyToken(c *fiber.Ctx) error {
 		})
 	}
 
-	if val, ok := claims["userId"].(float64); ok {
-		UserId = uint(val)
+	if val, ok := claims["userId"].(string); ok {
+		uuidUserId, errParseUserId := uuid.Parse(val)
+
+		if errParseUserId != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"code":    fiber.StatusBadRequest,
+				"message": errParseUserId.Error(),
+			})
+		}
+
+		UserId = uuidUserId
+
 	} else {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"code":    fiber.StatusUnauthorized,

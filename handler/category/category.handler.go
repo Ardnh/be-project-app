@@ -217,11 +217,16 @@ func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":       fiber.StatusOK,
-		"message":    "Successfully get category",
-		"page":       page,
-		"pageSize":   pageSize,
-		"totalPages": totalEntries,
-		"data":       category,
+		"code":    fiber.StatusOK,
+		"message": "Successfully get category",
+		"data": fiber.Map{
+			"items": category,
+			"pagination": fiber.Map{
+				"page":       page,
+				"pageSize":   pageSize,
+				"totalPages": totalEntries,
+			},
+			"filters": fiber.Map{},
+		},
 	})
 }
