@@ -35,7 +35,6 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, validate *validator.Validate) {
 	usersGroup.Post("/register", userHandler.Register)
 	usersGroup.Get("/profile/:user_id", helper.VerifyToken, userHandler.GetProfileById)
 	usersGroup.Put("/profile", helper.VerifyToken, userHandler.UpdateProfileById)
-
 	// Category
 	categoryGroup := appGroup.Group("category")
 	categoryGroup.Post("/", categoryHandler.Create)

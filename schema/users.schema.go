@@ -4,18 +4,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type Users struct {
+type User struct {
 	ID       uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	Username string
-	Email    string
-	Password string
-	Projects []Projects
+	Username string    `gorm:"type:varchar(100)"`
+	Email    string    `gorm:"type:varchar(100);uniqueIndex"`
+	Password string    `gorm:"type:varchar(100)"`
+	Projects []Project `gorm:"foreignKey:UserID"` // Relasi ke Project
+
 }
 
 type UserProfile struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	UserID    uuid.UUID
-	User      Users `gorm:"foreignKey:UserID"`
+	UserID    uuid.UUID `gorm:"type:uuid"`
+	User      User      `gorm:"foreignKey:UserID"`
 	Bio       string
 	Role      string
 	Facebook  string

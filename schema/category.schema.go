@@ -2,7 +2,7 @@ package schema
 
 import "github.com/google/uuid"
 
-type Categories struct {
+type Category struct {
 	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	Name string
+	Name string    `gorm:"type:varchar(100)"`
 }

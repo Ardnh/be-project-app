@@ -85,6 +85,11 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 		})
 	}
 
+	fmt.Println("login result")
+	fmt.Println(request.Password)
+	fmt.Println("err compare")
+	fmt.Println(errComparePassword)
+
 	// generate jwt token
 	token, errGenerateToken := helper.GenerateToken(userResult.ID)
 	if errGenerateToken != nil {
@@ -95,10 +100,12 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":     fiber.StatusOK,
-		"message":  "Login successfully",
-		"token":    token,
-		"username": userResult.Username,
+		"code":    fiber.StatusOK,
+		"message": "Login successfully",
+		"data": fiber.Map{
+			"token":    token,
+			"username": userResult.Username,
+		},
 	})
 }
 

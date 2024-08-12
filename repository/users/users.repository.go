@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +17,7 @@ type UsersRepository interface {
 	FindByUsernameOrEmail(ctx *fiber.Ctx, req string, isEmail bool) (*model.User, error)
 	FindByEmail(ctx *fiber.Ctx, email string) (*model.User, error)
 	CreatUserProfileById(ctx *fiber.Ctx, req *model.ProfileCreateRequest) error
-	UpdateProfileById(ctx *fiber.Ctx, userId uint, req model.ProfileUpdateRequest) error
+	UpdateProfileById(ctx *fiber.Ctx, userId uuid.UUID, req model.ProfileUpdateRequest) error
 	GetProfileById(ctx *fiber.Ctx, userId uint) (*model.Profile, error)
 }
 
@@ -149,15 +150,7 @@ func (repository *UsersRepositoryImpl) FindFollowersByUserId(ctx *fiber.Ctx, use
 	return userWithProfile, totalCount, nil
 }
 
-// func (repository *UsersRepositoryImpl) FindFollowingByUserId(userId int) ([]*model.UserWithProfile, error) {
-
-// }
-
-// func (repository *UsersRepositoryImpl) FindUserProfileById(userId int) (*model.Profile, error) {
-
-// }
-
-func (repository *UsersRepositoryImpl) UpdateProfileById(ctx *fiber.Ctx, userId uint, req model.ProfileUpdateRequest) error {
+func (repository *UsersRepositoryImpl) UpdateProfileById(ctx *fiber.Ctx, userId uuid.UUID, req model.ProfileUpdateRequest) error {
 
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
