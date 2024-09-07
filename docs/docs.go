@@ -94,26 +94,26 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "page",
+                        "description": "Page number",
                         "name": "page",
-                        "in": "path"
+                        "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "pageSize",
+                        "description": "Number of items per page",
                         "name": "pageSize",
-                        "in": "path"
+                        "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "categoryName",
+                        "description": "Filter by category name",
                         "name": "categoryName",
-                        "in": "path"
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success update category",
+                        "description": "Success get all categories",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -137,6 +137,72 @@ const docTemplate = `{
             }
         },
         "/category/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Update category by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Update category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update category",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CategoryUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success update category",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or missing required fields",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -188,62 +254,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/category/{}": {
-            "put": {
+        "/project-item": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "Update category",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Category"
-                ],
-                "summary": "Update category",
-                "parameters": [
-                    {
-                        "description": "Update category",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.CategoryUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success update category",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or missing required fields",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/project-item": {
-            "post": {
                 "description": "Create a new item within an existing project",
                 "consumes": [
                     "application/json"
@@ -252,7 +269,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ProjectItems"
+                    "Projects"
                 ],
                 "summary": "Create a new project item",
                 "parameters": [
@@ -293,6 +310,11 @@ const docTemplate = `{
         },
         "/project-item/{id}": {
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Update the details of an existing project item by ID",
                 "consumes": [
                     "application/json"
@@ -301,7 +323,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ProjectItems"
+                    "Projects"
                 ],
                 "summary": "Update an existing project item",
                 "parameters": [
@@ -347,9 +369,14 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Delete a specific project item by its ID",
                 "tags": [
-                    "Project"
+                    "Projects"
                 ],
                 "summary": "Delete a project item",
                 "parameters": [
@@ -388,12 +415,24 @@ const docTemplate = `{
         },
         "/project-item/{project_id}": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Retrieve all items associated with a specific project, with pagination, sorting, and filtering options.",
                 "tags": [
-                    "Project"
+                    "Projects"
                 ],
                 "summary": "Get all project items by project ID",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "default": 1,
@@ -410,8 +449,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by project name",
-                        "name": "projectName",
+                        "description": "Filter by project item name",
+                        "name": "projectItemName",
                         "in": "query"
                     },
                     {
@@ -442,6 +481,11 @@ const docTemplate = `{
         },
         "/projects": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Retrieve a paginated list of projects with optional sorting and filtering by project name and category name",
                 "consumes": [
                     "application/json"
@@ -504,10 +548,67 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create a new item within an existing project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Create a new project",
+                "parameters": [
+                    {
+                        "description": "Create Project Request",
+                        "name": "projectItem",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateProjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
             }
         },
         "/projects/{id}": {
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Update the details of an existing project by ID",
                 "consumes": [
                     "application/json"
@@ -562,6 +663,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Delete the project by its ID",
                 "consumes": [
                     "application/json"
@@ -882,17 +988,37 @@ const docTemplate = `{
         "model.CreateProjectItem": {
             "type": "object",
             "properties": {
-                "budgetItem": {
+                "budget_item": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
                 },
-                "projectID": {
+                "project_id": {
                     "type": "string"
                 },
                 "status": {
                     "type": "boolean"
+                }
+            }
+        },
+        "model.CreateProjectRequest": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -932,6 +1058,11 @@ const docTemplate = `{
         },
         "model.RegisterRequest": {
             "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -947,13 +1078,13 @@ const docTemplate = `{
         "model.UpdateProjectItem": {
             "type": "object",
             "properties": {
-                "budgetItem": {
+                "budget_item": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
                 },
-                "projectID": {
+                "project_id": {
                     "type": "string"
                 },
                 "status": {
@@ -967,7 +1098,7 @@ const docTemplate = `{
                 "budget": {
                     "type": "integer"
                 },
-                "categoryID": {
+                "category_id": {
                     "type": "string"
                 },
                 "description": {
@@ -976,7 +1107,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "userID": {
+                "user_id": {
                     "type": "string"
                 }
             }

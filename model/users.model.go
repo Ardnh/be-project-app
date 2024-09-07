@@ -1,23 +1,34 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
-	*gorm.Model
-	Username string
-	Email    string
-	Password string
+	ID        string     `json:"id"` // Ubah dari uint ke string jika menggunakan UUID
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Password  string     `json:"password"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
 type RegisterRequest struct {
-	Username string
-	Email    string
-	Password string
+	Username string `json:"username" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginRequest struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type IsEmail struct {
+	Email string `validate:"required,email"`
 }
 
 type Profile struct {
@@ -57,7 +68,7 @@ type ProfileUpdateRequest struct {
 }
 
 type ProfileCreateRequest struct {
-	UserId    uint
+	UserId    string
 	Bio       string
 	Role      string
 	Facebook  string

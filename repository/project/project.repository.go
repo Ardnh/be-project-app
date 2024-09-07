@@ -1,7 +1,6 @@
 package project
 
 import (
-	"errors"
 	"project-app/helper"
 	"project-app/model"
 
@@ -26,8 +25,8 @@ type ProjectRepositoryImpl struct {
 	Db *gorm.DB
 }
 
-var projectTableName = "project"
-var projectItemTableName = "project_item"
+var projectTableName = "projects"
+var projectItemTableName = "project_items"
 
 func NewProjectRepository(db *gorm.DB) ProjectRepository {
 	return &ProjectRepositoryImpl{
@@ -53,9 +52,60 @@ func (repository *ProjectRepositoryImpl) CreateProject(ctx *fiber.Ctx, req *mode
 }
 
 func (repository *ProjectRepositoryImpl) UpdateProject(ctx *fiber.Ctx, req *model.Projects) error {
-
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	// 1. Ambil data project lama
+	var existingProject model.Projects
+	if err := tx.
+		WithContext(ctx.Context()).
+		Table(projectTableName).
+		Where("id = ?", req.ID).
+		First(&existingProject).
+		Error; err != nil {
+		return err
+	}
+
+	// 2. Cek apakah budget project lama sama dengan budget project baru
+	if existingProject.Budget == req.Budget {
+		// Budget sama, update project seperti biasa
+		err := tx.
+			WithContext(ctx.Context()).
+			Table(projectTableName).
+			Where("id = ?", req.ID).
+			Updates(req).
+			Error
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// 3. Budget berbeda, lakukan rekalkulasi
+	// 3.1 Ambil semua project item yang memiliki project_id yang sama dengan req.ID
+	var projectItems []model.ProjectItem
+	if err := tx.
+		WithContext(ctx.Context()).
+		Table("project_items").
+		Where("project_id = ?", req.ID).
+		Find(&projectItems).
+		Error; err != nil {
+		return err
+	}
+
+	// 3.2 Jumlahkan semua budgetItem
+	var totalBudgetItem int
+	for _, item := range projectItems {
+		totalBudgetItem += item.BudgetItem
+	}
+
+	// 3.3 Kurangi budget baru dengan total budget item
+	newBudget := req.Budget - totalBudgetItem
+
+	// 3.4 Update budget project dari hasil pengurangan budget baru - total budget item
+	req.Budget = newBudget
 
 	err := tx.
 		WithContext(ctx.Context()).
@@ -102,51 +152,48 @@ func (repository *ProjectRepositoryImpl) DeleteProject(ctx *fiber.Ctx, req uuid.
 }
 
 func (repository *ProjectRepositoryImpl) GetAllProject(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectName string, categoryName string) (*[]model.Projects, int64, error) {
-
-	tx := repository.Db.Begin()
+	tx := repository.Db.WithContext(ctx.Context())
 	defer helper.CommitOrRollback(tx)
 
 	var projects []model.Projects
 	var totalCount int64
 
-	// Offset
+	// Offset calculation
 	offset := (page - 1) * pageSize
 
-	// Query
-	query := tx.WithContext(ctx.Context()).Table(projectTableName)
+	// Base query with Model and Preload
+	query := tx.Model(&model.Projects{}).
+		Joins("JOIN categories ON categories.id = projects.category_id").
+		Preload("Category")
 
+	// Apply filters if projectName or categoryName is provided
 	if projectName != "" || categoryName != "" {
-		query = query.
-			Joins("Join categories ON categories.id = projects.category_id").
-			Where("projects.name LIKE ? OR categories.name LIKE ? ", "%"+projectName+"%", "%"+categoryName+"%")
+		query = query.Where("projects.name ILIKE ? AND categories.name ILIKE ?", "%"+projectName+"%", "%"+categoryName+"%")
 	}
 
+	// Count total records
 	err := query.Count(&totalCount).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Sorting by budget
-	if sortOrder == "asc" {
+	// Apply sorting based on budget
+	switch sortOrder {
+	case "asc":
 		query = query.Order("budget ASC")
-	} else if sortOrder == "desc" {
+	case "desc":
 		query = query.Order("budget DESC")
-	} else {
+	default:
 		query = query.Order("budget ASC") // Default sorting
 	}
 
-	errResult := query.
-		Offset(offset).
-		Limit(pageSize).
-		Find(&projects).
-		Error
-
-	if errResult != nil {
-		return nil, 0, errResult
-	}
-
-	if len(projects) == 0 {
-		return nil, 0, errors.New("Project Not Found")
+	// Pagination and fetch results with related Category
+	err = query.Offset(offset).Limit(pageSize).Find(&projects).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &projects, 0, nil
+		}
+		return nil, 0, err
 	}
 
 	return &projects, totalCount, nil
@@ -255,7 +302,11 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 	var projectItemDetails model.ProjectItemResponse
 
 	// Get project
-	if err := repository.Db.WithContext(ctx.Context()).Table(projectTableName).
+	if err := repository.Db.WithContext(ctx.Context()).
+		Table(projectTableName).
+		Model(&model.Projects{}).
+		Joins("JOIN categories ON categories.id = projects.category_id").
+		Preload("Category").
 		Where("id = ?", projectID).
 		First(&projectItemDetails.Project).Error; err != nil {
 		return nil, 0, err
@@ -277,11 +328,11 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 	// Sorting by budget
 	switch sortOrder {
 	case "asc":
-		query = query.Order("budget ASC")
+		query = query.Order("budget_item ASC")
 	case "desc":
-		query = query.Order("budget DESC")
+		query = query.Order("budget_item DESC")
 	default:
-		query = query.Order("budget ASC") // Default sorting
+		query = query.Order("budget_item ASC") // Default sorting
 	}
 
 	// Count total items
@@ -290,12 +341,12 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 	}
 
 	// Fetch data
-	if err := query.Find(&projectItemDetails.Items).Error; err != nil {
+	if err := query.Find(&projectItemDetails.ProjectItems).Error; err != nil {
 		return nil, 0, err
 	}
 
 	if len(projectItems) == 0 {
-		return nil, 0, errors.New("Project Item Not Found")
+		return &projectItemDetails, 0, nil
 	}
 
 	return &projectItemDetails, totalCount, nil

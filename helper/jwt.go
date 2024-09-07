@@ -12,7 +12,7 @@ import (
 var secretKey = []byte(os.Getenv("JWT_SECRECT_KEY"))
 var UserId uuid.UUID
 
-func GenerateToken(userId uint) (string, error) {
+func GenerateToken(userId string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{

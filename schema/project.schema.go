@@ -1,7 +1,10 @@
 package schema
 
 import (
+	"time"
+
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Project struct {
@@ -14,6 +17,9 @@ type Project struct {
 	Description  string    `gorm:"type:text"`
 	Budget       int
 	ProjectItems []ProjectItem `gorm:"foreignKey:ProjectID"` // Relasi ke ProjectItem
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 type ProjectItem struct {
@@ -23,4 +29,7 @@ type ProjectItem struct {
 	Name       string
 	BudgetItem int
 	Status     bool
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
