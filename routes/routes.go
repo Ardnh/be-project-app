@@ -30,29 +30,30 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, validate *validator.Validate) {
 	appGroup.Get("/swagger/*", swagger.HandlerDefault)
 
 	// Users
-	usersGroup := appGroup.Group("user")
+	usersGroup := appGroup.Group("/user")
 	usersGroup.Post("/login", userHandler.Login)
 	usersGroup.Post("/register", userHandler.Register)
 	usersGroup.Get("/profile/:user_id", helper.VerifyToken, userHandler.GetProfileById)
 	usersGroup.Put("/profile", helper.VerifyToken, userHandler.UpdateProfileById)
+
 	// Category
-	categoryGroup := appGroup.Group("category")
+	categoryGroup := appGroup.Group("/category")
 	categoryGroup.Post("/", categoryHandler.Create)
-	categoryGroup.Put("/", categoryHandler.Update)
+	categoryGroup.Put("/:id", categoryHandler.Update)
 	categoryGroup.Delete("/:id", categoryHandler.Delete)
 	categoryGroup.Get("/", categoryHandler.FindAll)
 
 	// Project
-	projectGroup := appGroup.Group("projects")
+	projectGroup := appGroup.Group("/projects")
 	projectGroup.Post("/", projectHandler.CreateProject)
 	projectGroup.Put("/:id", projectHandler.UpdateProject)
 	projectGroup.Delete("/:id", projectHandler.DeleteProject)
 	projectGroup.Get("/", projectHandler.GetAllProject)
 
 	// Project item
-	projectItemGroup := appGroup.Group("project-item")
+	projectItemGroup := appGroup.Group("/project-item")
 	projectItemGroup.Post("/", projectHandler.CreateProjectItem)
-	projectGroup.Put("/:id", projectHandler.UpdateProjectItem)
-	projectGroup.Delete("/:id", projectHandler.DeleteProjectItem)
-	projectGroup.Get("/:project_id", projectHandler.GetAllProjectItemByProjectId)
+	projectItemGroup.Put("/:id", projectHandler.UpdateProjectItem)
+	projectItemGroup.Delete("/:id", projectHandler.DeleteProjectItem)
+	projectItemGroup.Get("/:project_id", projectHandler.GetAllProjectItemByProjectId)
 }

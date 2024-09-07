@@ -13,7 +13,7 @@ import (
 )
 
 type UsersRepository interface {
-	Register(ctx *fiber.Ctx, req *model.User) (*uint, error)
+	Register(ctx *fiber.Ctx, req *model.User) (*string, error)
 	FindByUsernameOrEmail(ctx *fiber.Ctx, req string, isEmail bool) (*model.User, error)
 	FindByEmail(ctx *fiber.Ctx, email string) (*model.User, error)
 	CreatUserProfileById(ctx *fiber.Ctx, req *model.ProfileCreateRequest) error
@@ -55,7 +55,7 @@ func (repository *UsersRepositoryImpl) GetProfileById(ctx *fiber.Ctx, userId uin
 	return &result, nil
 }
 
-func (repository *UsersRepositoryImpl) Register(ctx *fiber.Ctx, req *model.User) (*uint, error) {
+func (repository *UsersRepositoryImpl) Register(ctx *fiber.Ctx, req *model.User) (*string, error) {
 
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -74,21 +74,24 @@ func (repository *UsersRepositoryImpl) Register(ctx *fiber.Ctx, req *model.User)
 }
 
 func (repository *UsersRepositoryImpl) FindByUsernameOrEmail(ctx *fiber.Ctx, req string, isEmail bool) (*model.User, error) {
-
-	tx := repository.Db.Begin()
-	defer helper.CommitOrRollback(tx)
-
 	var result model.User
 
-	query := tx.WithContext(ctx.Context()).Table(tableUser)
+	// Buat query dasar
+	query := repository.Db.WithContext(ctx.Context()).Table(tableUser)
 
+	fmt.Println("find by username and email")
+	fmt.Println(req)
+	fmt.Println(isEmail)
+
+	// Tentukan kondisi berdasarkan isEmail
 	if isEmail {
-		query = query.Where("email = ?", req).Find(&result)
+		query = query.Where("email = ?", req)
+	} else {
+		query = query.Where("username = ?", req)
 	}
 
-	query = query.Where("username = ?", req).Find(&result)
-
-	err := query.Error
+	// Jalankan query untuk mendapatkan hasil pertama
+	err := query.First(&result).Error
 	if err != nil {
 		return nil, err
 	}

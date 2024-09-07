@@ -1,18 +1,20 @@
 package category
 
 import (
+	"fmt"
 	"project-app/helper"
 	"project-app/model"
 	categoryModel "project-app/model"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type CategoryRepository interface {
 	Create(ctx *fiber.Ctx, req *model.Category) error
-	Update(ctx *fiber.Ctx, id int, req *model.Category) error
-	Delete(ctx *fiber.Ctx, id int) error
+	Update(ctx *fiber.Ctx, id uuid.UUID, req *model.Category) error
+	Delete(ctx *fiber.Ctx, id uuid.UUID) error
 	FindAll(ctx *fiber.Ctx, page int, pageSize int, searchQuery string) ([]categoryModel.Category, int64, error)
 }
 
@@ -46,7 +48,7 @@ func (repository *CategoryRepositoryImpl) Create(ctx *fiber.Ctx, req *model.Cate
 	return nil
 }
 
-func (repository *CategoryRepositoryImpl) Update(ctx *fiber.Ctx, id int, req *model.Category) error {
+func (repository *CategoryRepositoryImpl) Update(ctx *fiber.Ctx, id uuid.UUID, req *model.Category) error {
 
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -64,7 +66,7 @@ func (repository *CategoryRepositoryImpl) Update(ctx *fiber.Ctx, id int, req *mo
 	return nil
 }
 
-func (repository *CategoryRepositoryImpl) Delete(ctx *fiber.Ctx, id int) error {
+func (repository *CategoryRepositoryImpl) Delete(ctx *fiber.Ctx, id uuid.UUID) error {
 
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -85,6 +87,9 @@ func (repository *CategoryRepositoryImpl) FindAll(ctx *fiber.Ctx, page int, page
 	var category []categoryModel.Category
 	var totalCount int64
 
+	fmt.Println("search query")
+	fmt.Println(searchQuery)
+
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -95,7 +100,7 @@ func (repository *CategoryRepositoryImpl) FindAll(ctx *fiber.Ctx, page int, page
 	query := tx.WithContext(ctx.Context()).Table(tableName)
 
 	if searchQuery != "" {
-		query = query.Where("category LIKE ? ", "%"+searchQuery+"%")
+		query = query.Where("name ILIKE ? ", "%"+searchQuery+"%")
 	}
 
 	err := query.Count(&totalCount).Error
@@ -110,6 +115,11 @@ func (repository *CategoryRepositoryImpl) FindAll(ctx *fiber.Ctx, page int, page
 		Error
 
 	if errResult != nil {
+
+		if errResult == gorm.ErrRecordNotFound {
+			return []categoryModel.Category{}, 0, nil
+		}
+
 		return nil, 0, errResult
 	}
 

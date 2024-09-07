@@ -16,14 +16,27 @@ definitions:
     type: object
   model.CreateProjectItem:
     properties:
-      budgetItem:
+      budget_item:
         type: integer
       name:
         type: string
-      projectID:
+      project_id:
         type: string
       status:
         type: boolean
+    type: object
+  model.CreateProjectRequest:
+    properties:
+      budget:
+        type: integer
+      category_id:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
     type: object
   model.LoginRequest:
     properties:
@@ -55,14 +68,18 @@ definitions:
         type: string
       username:
         type: string
+    required:
+    - email
+    - password
+    - username
     type: object
   model.UpdateProjectItem:
     properties:
-      budgetItem:
+      budget_item:
         type: integer
       name:
         type: string
-      projectID:
+      project_id:
         type: string
       status:
         type: boolean
@@ -71,13 +88,13 @@ definitions:
     properties:
       budget:
         type: integer
-      categoryID:
+      category_id:
         type: string
       description:
         type: string
       name:
         type: string
-      userID:
+      user_id:
         type: string
     type: object
 host: localhost:8080
@@ -131,23 +148,23 @@ paths:
       - application/json
       description: Get all category
       parameters:
-      - description: page
-        in: path
+      - description: Page number
+        in: query
         name: page
         type: string
-      - description: pageSize
-        in: path
+      - description: Number of items per page
+        in: query
         name: pageSize
         type: string
-      - description: categoryName
-        in: path
+      - description: Filter by category name
+        in: query
         name: categoryName
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Success update category
+          description: Success get all categories
           schema:
             additionalProperties: true
             type: object
@@ -164,41 +181,6 @@ paths:
       security:
       - Bearer: []
       summary: Get all category
-      tags:
-      - Category
-  /category/{}:
-    put:
-      consumes:
-      - application/json
-      description: Update category
-      parameters:
-      - description: Update category
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/model.CategoryUpdateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success update category
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request body or missing required fields
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - Bearer: []
-      summary: Update category
       tags:
       - Category
   /category/{id}:
@@ -235,6 +217,50 @@ paths:
       summary: Delete category
       tags:
       - Category
+    put:
+      consumes:
+      - application/json
+      description: Update category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update category
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CategoryUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success update category
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body or missing required fields
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Category not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Update category
+      tags:
+      - Category
   /project-item:
     post:
       consumes:
@@ -265,9 +291,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Create a new project item
       tags:
-      - ProjectItems
+      - Projects
   /project-item/{id}:
     delete:
       description: Delete a specific project item by its ID
@@ -293,9 +321,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Delete a project item
       tags:
-      - Project
+      - Projects
     put:
       consumes:
       - application/json
@@ -330,14 +360,21 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Update an existing project item
       tags:
-      - ProjectItems
+      - Projects
   /project-item/{project_id}:
     get:
       description: Retrieve all items associated with a specific project, with pagination,
         sorting, and filtering options.
       parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
       - default: 1
         description: Page number
         in: query
@@ -348,9 +385,9 @@ paths:
         in: query
         name: pageSize
         type: integer
-      - description: Filter by project name
+      - description: Filter by project item name
         in: query
-        name: projectName
+        name: projectItemName
         type: string
       - default: asc
         description: Sort order, either 'asc' or 'desc'
@@ -368,9 +405,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Get all project items by project ID
       tags:
-      - Project
+      - Projects
   /projects:
     get:
       consumes:
@@ -414,7 +453,43 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Get all projects with pagination, sorting, and filtering
+      tags:
+      - Projects
+    post:
+      consumes:
+      - application/json
+      description: Create a new item within an existing project
+      parameters:
+      - description: Create Project Request
+        in: body
+        name: projectItem
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Create a new project
       tags:
       - Projects
   /projects/{id}:
@@ -446,6 +521,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Delete an existing project
       tags:
       - Projects
@@ -483,6 +560,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - Bearer: []
       summary: Update an existing project
       tags:
       - Projects
