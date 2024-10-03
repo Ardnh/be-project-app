@@ -1,0 +1,24 @@
+version: "3.8" # Versi Docker Compose
+
+services:
+  postgres:
+    image: postgres:latest # Gunakan image PostgreSQL terbaru
+    container_name: postgres_container # Nama container yang ingin digunakan
+    environment:
+      POSTGRES_USER: your_username # Tentukan username untuk PostgreSQL
+      POSTGRES_PASSWORD: your_password # Tentukan password untuk PostgreSQL
+      POSTGRES_DB: your_database # Nama database yang akan dibuat
+    ports:
+      - "5432:5432" # Forward port 5432 untuk akses PostgreSQL dari host
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Simpan data agar tetap ada meskipun container dihapus
+    networks:
+      - postgres_network # Network untuk menghubungkan dengan service lain jika diperlukan
+
+volumes:
+  postgres_data: # Buat volume untuk menyimpan data
+    driver: local
+
+networks:
+  postgres_network: # Jaringan internal untuk container
+    driver: bridge

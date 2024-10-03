@@ -79,10 +79,6 @@ func (repository *UsersRepositoryImpl) FindByUsernameOrEmail(ctx *fiber.Ctx, req
 	// Buat query dasar
 	query := repository.Db.WithContext(ctx.Context()).Table(tableUser)
 
-	fmt.Println("find by username and email")
-	fmt.Println(req)
-	fmt.Println(isEmail)
-
 	// Tentukan kondisi berdasarkan isEmail
 	if isEmail {
 		query = query.Where("email = ?", req)

@@ -345,6 +345,7 @@ func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
 				"page":       pageInt,
 				"pageSize":   pageSizeInt,
 				"totalPages": totalPages,
+				"totalItems": totalEntries,
 			},
 			"filters": fiber.Map{
 				"categoryName":  categoryName,
