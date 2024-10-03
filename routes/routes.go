@@ -38,9 +38,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, validate *validator.Validate) {
 
 	// Category
 	categoryGroup := appGroup.Group("/category")
-	categoryGroup.Post("/", categoryHandler.Create)
-	categoryGroup.Put("/:id", categoryHandler.Update)
-	categoryGroup.Delete("/:id", categoryHandler.Delete)
+	categoryGroup.Post("/", helper.VerifyToken, categoryHandler.Create)
+	categoryGroup.Put("/:id", helper.VerifyToken, categoryHandler.Update)
+	categoryGroup.Delete("/:id", helper.VerifyToken, categoryHandler.Delete)
 	categoryGroup.Get("/", categoryHandler.FindAll)
 
 	// Project
