@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -122,31 +123,44 @@ func (repository *ProjectRepositoryImpl) UpdateProject(ctx *fiber.Ctx, req *mode
 }
 
 func (repository *ProjectRepositoryImpl) DeleteProject(ctx *fiber.Ctx, req uuid.UUID) error {
-
+	// Mulai transaksi
 	tx := repository.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	// hapus project item berdasarkan project ID
+	// Log awal proses penghapusan project
+	logrus.WithField("ProjectID", req).Info("Deleting project and related items")
+
+	// Hapus project item berdasarkan project ID
 	errDeleteProjectItem := tx.
 		WithContext(ctx.Context()).
 		Table(projectItemTableName).
-		Delete(&model.ProjectItem{}, req).
+		Where("project_id = ?", req). // Pastikan filter by project_id
+		Delete(&model.ProjectItem{}).
 		Error
 
 	if errDeleteProjectItem != nil {
+		logrus.WithError(errDeleteProjectItem).Error("Failed to delete project items")
 		return errDeleteProjectItem
 	}
 
-	// hapus project berdasarkan project ID
+	// Log sukses menghapus project items
+	logrus.WithField("ProjectID", req).Info("Project items deleted successfully")
+
+	// Hapus project berdasarkan project ID
 	errDeleteProject := tx.
 		WithContext(ctx.Context()).
-		Table(projectItemTableName).
-		Delete(&model.Projects{}, req).
+		Table(projectTableName).
+		Where("id = ?", req). // Pastikan filter by project ID
+		Delete(&model.Projects{}).
 		Error
 
 	if errDeleteProject != nil {
+		logrus.WithError(errDeleteProject).Error("Failed to delete project")
 		return errDeleteProject
 	}
+
+	// Log sukses menghapus project
+	logrus.WithField("ProjectID", req).Info("Project deleted successfully")
 
 	return nil
 }
@@ -296,36 +310,47 @@ func (repository *ProjectRepositoryImpl) DeleteProjectItem(ctx *fiber.Ctx, req u
 	return nil
 }
 
-func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber.Ctx, page int, pageSize int, sortOrder string, projectItemName string, projectID uuid.UUID) (*model.ProjectItemResponse, int64, error) {
-	var projectItems []model.ProjectItem
+func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(
+	ctx *fiber.Ctx,
+	page int,
+	pageSize int,
+	sortOrder string,
+	projectItemName string,
+	projectID uuid.UUID,
+) (*model.ProjectItemResponse, int64, error) {
+
+	// var projectItems []model.ProjectItem
 	var totalCount int64
 	var projectItemDetails model.ProjectItemResponse
 
-	// Get project
+	// Validasi Project ID dan ambiguitas id
 	if err := repository.Db.WithContext(ctx.Context()).
 		Table(projectTableName).
 		Model(&model.Projects{}).
 		Joins("JOIN categories ON categories.id = projects.category_id").
 		Preload("Category").
-		Where("id = ?", projectID).
+		Where("projects.id = ?", projectID). // Tambahkan projects.id
 		First(&projectItemDetails.Project).Error; err != nil {
+		logrus.WithError(err).Error("Failed to fetch project details")
 		return nil, 0, err
 	}
 
-	// Offset
+	// Hitung offset untuk pagination
 	offset := (page - 1) * pageSize
 
-	// Query
-	query := repository.Db.WithContext(ctx.Context()).Table(projectItemTableName).
+	// Query untuk mendapatkan project item berdasarkan project_id
+	query := repository.Db.WithContext(ctx.Context()).
+		Table(projectItemTableName).
 		Where("project_id = ?", projectID).
 		Offset(offset).
 		Limit(pageSize)
 
+	// Jika projectItemName tidak kosong, tambahkan filter pencarian
 	if projectItemName != "" {
 		query = query.Where("name LIKE ?", "%"+projectItemName+"%")
 	}
 
-	// Sorting by budget
+	// Sorting berdasarkan budget item
 	switch sortOrder {
 	case "asc":
 		query = query.Order("budget_item ASC")
@@ -335,19 +360,24 @@ func (repository *ProjectRepositoryImpl) GetAllProjectItemByProjectId(ctx *fiber
 		query = query.Order("budget_item ASC") // Default sorting
 	}
 
-	// Count total items
+	// Hitung total item
 	if err := query.Count(&totalCount).Error; err != nil {
+		logrus.WithError(err).Error("Failed to count project items")
 		return nil, 0, err
 	}
 
-	// Fetch data
+	// Ambil data project items
 	if err := query.Find(&projectItemDetails.ProjectItems).Error; err != nil {
+		logrus.WithError(err).Error("Failed to fetch project items")
 		return nil, 0, err
 	}
 
-	if len(projectItems) == 0 {
-		return &projectItemDetails, 0, nil
-	}
+	// Log jumlah project items yang ditemukan
+	logrus.WithFields(logrus.Fields{
+		"totalItems": totalCount,
+		"projectID":  projectID,
+	}).Info("Successfully fetched project items")
 
+	// Kembalikan response
 	return &projectItemDetails, totalCount, nil
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 type CategoryHandler interface {
@@ -25,8 +24,7 @@ type CategoryHandlerImpl struct {
 	Validator          *validator.Validate
 }
 
-func NewCategoryHandler(db *gorm.DB, validate *validator.Validate) CategoryHandler {
-	categoryRepository := categoryRepository.NewCategoryRepository(db)
+func NewCategoryHandler(categoryRepository categoryRepository.CategoryRepository, validate *validator.Validate) CategoryHandler {
 	return &CategoryHandlerImpl{
 		CategoryRepository: categoryRepository,
 		Validator:          validate,
