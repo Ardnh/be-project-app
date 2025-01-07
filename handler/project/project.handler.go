@@ -57,11 +57,7 @@ func (handler *ProjectHandlerImpl) CreateProject(c *fiber.Ctx) error {
 	var request model.CreateProjectRequest
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse CreateProject request body")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Invalid request body",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Invalid request body", helper.ElapsedTime(start))
 	}
 
 	// Validasi request
@@ -88,11 +84,7 @@ func (handler *ProjectHandlerImpl) CreateProject(c *fiber.Ctx) error {
 	// Simpan project ke repository
 	if err := handler.ProjectRepository.CreateProject(c, &createRequest); err != nil {
 		logrus.WithError(err).Error("Failed to create project")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Project creation failed",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Project creation failed", helper.ElapsedTime(start))
 	}
 
 	// Log keberhasilan pembuatan proyek
@@ -140,33 +132,22 @@ func (handler *ProjectHandlerImpl) UpdateProject(c *fiber.Ctx) error {
 	idString := c.Params("id", "")
 	if idString == "" {
 		logrus.Warn("Invalid project ID: ID is empty")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid ID", helper.ElapsedTime(start))
 	}
 
 	// Parsing UUID
 	uuidID, err := uuid.Parse(idString)
 	if err != nil {
 		logrus.WithError(err).Warn("Error parsing project ID")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Error parsing ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Error parsing ID", helper.ElapsedTime(start))
 	}
 
 	// Parsing body request
 	var request model.UpdateProjectRequest
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse UpdateProject request body")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     err.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	// Log request parsed successfully
@@ -205,11 +186,7 @@ func (handler *ProjectHandlerImpl) UpdateProject(c *fiber.Ctx) error {
 	errResult := handler.ProjectRepository.UpdateProject(c, updateRequest)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to update project")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     errResult.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, errResult.Error(), helper.ElapsedTime(start))
 	}
 
 	// Log success
@@ -248,22 +225,14 @@ func (handler *ProjectHandlerImpl) DeleteProject(c *fiber.Ctx) error {
 	idString := c.Params("id", "")
 	if idString == "" {
 		logrus.Warn("DeleteProject request failed: invalid ID parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid ID", helper.ElapsedTime(start))
 	}
 
 	// Parsing UUID
 	uuidID, err := uuid.Parse(idString)
 	if err != nil {
 		logrus.WithError(err).Warn("Error parsing project ID")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Error parsing ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Error parsing ID", helper.ElapsedTime(start))
 	}
 
 	// Log ID proyek yang akan dihapus
@@ -273,11 +242,7 @@ func (handler *ProjectHandlerImpl) DeleteProject(c *fiber.Ctx) error {
 	errResult := handler.ProjectRepository.DeleteProject(c, uuidID)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to delete project")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Failed to delete project",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Failed to delete project", helper.ElapsedTime(start))
 	}
 
 	// Log jika project berhasil dihapus
@@ -315,22 +280,14 @@ func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		logrus.WithError(err).Warn("Invalid page parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid page parameter",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid page parameter", helper.ElapsedTime(start))
 	}
 
 	pageSize := c.Query("pageSize", "10")
 	pageSizeInt, err := strconv.Atoi(pageSize)
 	if err != nil {
 		logrus.WithError(err).Warn("Invalid pageSize parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid pageSize parameter",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid pageSize parameter", helper.ElapsedTime(start))
 	}
 
 	projectName := c.Query("projectName", "")
@@ -352,10 +309,7 @@ func (handler *ProjectHandlerImpl) GetAllProject(c *fiber.Ctx) error {
 	projects, totalItem, errResult := handler.ProjectRepository.GetAllProject(c, pageInt, pageSizeInt, sortDirection, projectName, categoryName)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to fetch projects")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": "Failed to fetch projects",
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Failed to fetch projects", helper.ElapsedTime(start))
 	}
 
 	// Hitung total halaman
@@ -416,11 +370,7 @@ func (handler *ProjectHandlerImpl) CreateProjectItem(c *fiber.Ctx) error {
 	var request model.CreateProjectItem
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse CreateProjectItem request body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid request body",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid request body", helper.ElapsedTime(start))
 	}
 
 	// Validasi request
@@ -456,11 +406,7 @@ func (handler *ProjectHandlerImpl) CreateProjectItem(c *fiber.Ctx) error {
 	errResult := handler.ProjectRepository.CreateProjectItem(c, &createRequest)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to create project item")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Failed to create project item",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Failed to create project item", helper.ElapsedTime(start))
 	}
 
 	// Log keberhasilan pembuatan project item
@@ -499,33 +445,21 @@ func (handler *ProjectHandlerImpl) UpdateProjectItem(c *fiber.Ctx) error {
 	idString := c.Params("id", "")
 	if idString == "" {
 		logrus.Warn("Invalid project item ID: ID is empty")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid ID", helper.ElapsedTime(start))
 	}
 
 	// Parsing UUID
 	uuidID, err := uuid.Parse(idString)
 	if err != nil {
 		logrus.WithError(err).Warn("Error parsing project item ID")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Error parsing ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Error parsing ID", helper.ElapsedTime(start))
 	}
 
 	// Parsing body request
 	var request model.UpdateProjectItem
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse UpdateProjectItem request body")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Invalid request body",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid request body", helper.ElapsedTime(start))
 	}
 
 	// Validasi request
@@ -561,11 +495,7 @@ func (handler *ProjectHandlerImpl) UpdateProjectItem(c *fiber.Ctx) error {
 	errResult := handler.ProjectRepository.UpdateProjectItem(c, &updateRequest)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to update project item")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Failed to update project item",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Failed to update project item", helper.ElapsedTime(start))
 	}
 
 	// Log keberhasilan update
@@ -598,22 +528,14 @@ func (handler *ProjectHandlerImpl) DeleteProjectItem(c *fiber.Ctx) error {
 	idString := c.Params("id", "")
 	if idString == "" {
 		logrus.Warn("DeleteProjectItem request failed: invalid ID parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid ID", helper.ElapsedTime(start))
 	}
 
 	// Parsing UUID
 	uuidID, err := uuid.Parse(idString)
 	if err != nil {
 		logrus.WithError(err).Warn("Error parsing project item ID")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Error parsing ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Error parsing ID", helper.ElapsedTime(start))
 	}
 
 	// Log penghapusan project item dimulai
@@ -623,11 +545,7 @@ func (handler *ProjectHandlerImpl) DeleteProjectItem(c *fiber.Ctx) error {
 	errResult := handler.ProjectRepository.DeleteProjectItem(c, uuidID)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to delete project item")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Failed to delete project item",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Failed to delete project item", helper.ElapsedTime(start))
 	}
 
 	// Log sukses menghapus project item
@@ -663,22 +581,14 @@ func (handler *ProjectHandlerImpl) GetAllProjectItemByProjectId(c *fiber.Ctx) er
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		logrus.WithError(err).Warn("Invalid page parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid page parameter",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid page parameter", helper.ElapsedTime(start))
 	}
 
 	pageSize := c.Query("pageSize", "10")
 	pageSizeInt, err := strconv.Atoi(pageSize)
 	if err != nil {
 		logrus.WithError(err).Warn("Invalid pageSize parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid pageSize parameter",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid pageSize parameter", helper.ElapsedTime(start))
 	}
 
 	projectItemName := c.Query("projectItemName", "")
@@ -689,21 +599,13 @@ func (handler *ProjectHandlerImpl) GetAllProjectItemByProjectId(c *fiber.Ctx) er
 	idString := c.Params("project_id", "")
 	if idString == "" {
 		logrus.Warn("Invalid project ID: ID is empty")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Invalid project ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid project ID", helper.ElapsedTime(start))
 	}
 
 	uuidID, err := uuid.Parse(idString)
 	if err != nil {
 		logrus.WithError(err).Warn("Error parsing project ID")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Error parsing project ID",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Error parsing project ID", helper.ElapsedTime(start))
 	}
 
 	// Log detail pencarian
@@ -720,11 +622,7 @@ func (handler *ProjectHandlerImpl) GetAllProjectItemByProjectId(c *fiber.Ctx) er
 	projectItems, totalItem, errResult := handler.ProjectRepository.GetAllProjectItemByProjectId(c, pageInt, pageSizeInt, sortDirection, projectItemName, uuidID)
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to fetch project items")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Failed to fetch project items",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Failed to fetch project items", helper.ElapsedTime(start))
 	}
 
 	// Hitung total halaman

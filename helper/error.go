@@ -38,3 +38,11 @@ func HandleValidationError[T any](err error, startTime time.Time, req T) fiber.M
 		"errors":      errorsField,
 	}
 }
+
+func SendError(c *fiber.Ctx, code int, message string, processTime string) error {
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"code":        fiber.StatusInternalServerError,
+		"message":     message,
+		"processTime": processTime,
+	})
+}

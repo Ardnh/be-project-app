@@ -1,6 +1,7 @@
 package category
 
 import (
+	"project-app/helper"
 	"project-app/model"
 	categoryRepository "project-app/repository/category"
 
@@ -44,6 +45,10 @@ func NewCategoryHandler(categoryRepository categoryRepository.CategoryRepository
 // @Router /category [post]
 // @Security Bearer
 func (handler *CategoryHandlerImpl) Create(c *fiber.Ctx) error {
+
+	// Start measure process time
+	start := helper.StartTime()
+
 	// Logging request start
 	logrus.Info("Create category request received")
 
@@ -52,8 +57,9 @@ func (handler *CategoryHandlerImpl) Create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse request body")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": "Invalid request body",
+			"code":        fiber.StatusInternalServerError,
+			"message":     "Invalid request body",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -65,10 +71,7 @@ func (handler *CategoryHandlerImpl) Create(c *fiber.Ctx) error {
 	errValidate := handler.Validator.Struct(request)
 	if errValidate != nil {
 		logrus.WithError(errValidate).Warn("Validation error in create category request")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": errValidate.Error(),
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(helper.HandleValidationError(errValidate, start, request))
 	}
 
 	// Prepare to create category
@@ -87,8 +90,9 @@ func (handler *CategoryHandlerImpl) Create(c *fiber.Ctx) error {
 	if err != nil {
 		logrus.WithError(err).Error("Failed to create category in the repository")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": err.Error(),
+			"code":        fiber.StatusInternalServerError,
+			"message":     err.Error(),
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -98,8 +102,9 @@ func (handler *CategoryHandlerImpl) Create(c *fiber.Ctx) error {
 	}).Info("Category created successfully")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":    fiber.StatusOK,
-		"message": "Successfully created category",
+		"code":        fiber.StatusOK,
+		"message":     "Successfully created category",
+		"processTime": helper.ElapsedTime(start),
 	})
 }
 
@@ -118,6 +123,10 @@ func (handler *CategoryHandlerImpl) Create(c *fiber.Ctx) error {
 // @Router /category/{id} [put]
 // @Security Bearer
 func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
+
+	// Start measure process time
+	start := helper.StartTime()
+
 	// Logging request start
 	logrus.Info("Update category request received")
 
@@ -126,8 +135,9 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 	if idString == "" {
 		logrus.Warn("Invalid ID: empty")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Invalid ID",
+			"code":        fiber.StatusBadRequest,
+			"message":     "Invalid ID",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -136,8 +146,9 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 	if errParsing != nil {
 		logrus.WithError(errParsing).Warn("Error parsing ID")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Error parsing id",
+			"code":        fiber.StatusBadRequest,
+			"message":     "Error parsing id",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -150,8 +161,9 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse request body")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": "Invalid request body",
+			"code":        fiber.StatusInternalServerError,
+			"message":     "Invalid request body",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -163,10 +175,7 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 	errValidate := handler.Validator.Struct(&request)
 	if errValidate != nil {
 		logrus.WithError(errValidate).Warn("Validation error in update category request")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": errValidate.Error(),
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(helper.HandleValidationError(errValidate, start, request))
 	}
 
 	// Update request object
@@ -184,8 +193,9 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to update category in repository")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": errResult.Error(),
+			"code":        fiber.StatusInternalServerError,
+			"message":     errResult.Error(),
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -195,8 +205,9 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 	}).Info("Category updated successfully")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":    fiber.StatusOK,
-		"message": "Successfully updated category",
+		"code":        fiber.StatusOK,
+		"message":     "Successfully updated category",
+		"processTime": helper.ElapsedTime(start),
 	})
 }
 
@@ -213,6 +224,10 @@ func (handler *CategoryHandlerImpl) Update(c *fiber.Ctx) error {
 // @Router /category/{id} [delete]
 // @Security Bearer
 func (handler *CategoryHandlerImpl) Delete(c *fiber.Ctx) error {
+
+	// Start measure process time
+	start := helper.StartTime()
+
 	// Logging request start
 	logrus.Info("Delete category request received")
 
@@ -221,8 +236,9 @@ func (handler *CategoryHandlerImpl) Delete(c *fiber.Ctx) error {
 	if idString == "" {
 		logrus.Warn("Invalid ID: empty")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Invalid ID",
+			"code":        fiber.StatusBadRequest,
+			"message":     "Invalid ID",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -234,8 +250,9 @@ func (handler *CategoryHandlerImpl) Delete(c *fiber.Ctx) error {
 			"error": errParsing,
 		}).Warn("Error parsing ID")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Error parsing id",
+			"code":        fiber.StatusBadRequest,
+			"message":     "Error parsing id",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -251,8 +268,9 @@ func (handler *CategoryHandlerImpl) Delete(c *fiber.Ctx) error {
 			"error":       errResult,
 		}).Error("Failed to delete category from repository")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": errResult.Error(),
+			"code":        fiber.StatusInternalServerError,
+			"message":     errResult.Error(),
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -261,8 +279,9 @@ func (handler *CategoryHandlerImpl) Delete(c *fiber.Ctx) error {
 	}).Info("Category deleted successfully")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":    fiber.StatusOK,
-		"message": "Successfully deleted category",
+		"code":        fiber.StatusOK,
+		"message":     "Successfully deleted category",
+		"processTime": helper.ElapsedTime(start),
 	})
 }
 
@@ -281,6 +300,10 @@ func (handler *CategoryHandlerImpl) Delete(c *fiber.Ctx) error {
 // @Router /category/ [get]
 // @Security Bearer
 func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
+
+	// Start measure process time
+	start := helper.StartTime()
+
 	// Extract query parameters
 	page := c.Query("page", "1")
 	pageSize := c.Query("pageSize", "10")
@@ -306,8 +329,9 @@ func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
 			"pageSize": pageSize,
 		}).Warn("Failed to parse page or pageSize into integers")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Invalid page or pageSize",
+			"code":        fiber.StatusBadRequest,
+			"message":     "Invalid page or pageSize",
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -316,8 +340,9 @@ func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
 	if errResult != nil {
 		logrus.WithError(errResult).Error("Failed to retrieve categories from repository")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": errResult.Error(),
+			"code":        fiber.StatusInternalServerError,
+			"message":     errResult.Error(),
+			"processTime": helper.ElapsedTime(start),
 		})
 	}
 
@@ -335,8 +360,9 @@ func (handler *CategoryHandlerImpl) FindAll(c *fiber.Ctx) error {
 	}).Info("Categories retrieved successfully")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code":    fiber.StatusOK,
-		"message": "Successfully retrieved categories",
+		"code":        fiber.StatusOK,
+		"message":     "Successfully retrieved categories",
+		"processTime": helper.ElapsedTime(start),
 		"data": fiber.Map{
 			"items": category,
 			"pagination": fiber.Map{
