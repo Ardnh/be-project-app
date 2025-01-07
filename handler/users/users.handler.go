@@ -54,11 +54,7 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 	var request model.LoginRequest
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse login request body")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     err.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -69,7 +65,6 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 	errValidate := handler.Validate.Struct(request)
 	if errValidate != nil {
 		logrus.WithError(errValidate).Warn("Validation error in login request")
-
 		return c.Status(fiber.StatusBadRequest).JSON(helper.HandleValidationError(errValidate, start, request))
 	}
 
@@ -97,11 +92,7 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 	userResult, errUserFindByEmail := handler.UsersRepository.FindByUsernameOrEmail(c, request.Email, isEmail)
 	if errUserFindByEmail != nil {
 		logrus.WithError(errUserFindByEmail).Error("Failed to find user by email or username")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     errUserFindByEmail.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, errUserFindByEmail.Error(), helper.ElapsedTime(start))
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -113,11 +104,7 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 	errComparePassword := helper.CheckPasswordHash(request.Password, userResult.Password)
 	if !errComparePassword {
 		logrus.Warn("Password mismatch for user", userResult.Username)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "Wrong password!",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusBadRequest, "Wrong password!", helper.ElapsedTime(start))
 	}
 
 	logrus.Info("Password matched, generating JWT token")
@@ -126,11 +113,7 @@ func (handler *UsersHandlerImpl) Login(c *fiber.Ctx) error {
 	token, errGenerateToken := helper.GenerateToken(userResult.ID)
 	if errGenerateToken != nil {
 		logrus.WithError(errGenerateToken).Error("Failed to generate JWT token")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     errGenerateToken.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, errGenerateToken.Error(), helper.ElapsedTime(start))
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -170,11 +153,7 @@ func (handler *UsersHandlerImpl) Register(c *fiber.Ctx) error {
 	var request model.RegisterRequest
 	if err := c.BodyParser(&request); err != nil {
 		logrus.WithError(err).Error("Failed to parse register request body")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     err.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -193,33 +172,22 @@ func (handler *UsersHandlerImpl) Register(c *fiber.Ctx) error {
 	result, err := handler.UsersRepository.FindByEmail(c, request.Email)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to check existing user by email")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     err.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	if result.Email == request.Email {
 		logrus.WithFields(logrus.Fields{
 			"email": request.Email,
 		}).Warn("User already exists")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":        fiber.StatusBadRequest,
-			"message":     "User already exist",
-			"processTime": helper.ElapsedTime(start),
-		})
+
+		return helper.SendError(c, fiber.StatusBadRequest, "User already exist", helper.ElapsedTime(start))
 	}
 
 	// 4. Hash user password
 	hashResult, errHash := helper.HashPassword(request.Password)
 	if errHash != nil {
 		logrus.WithError(errHash).Error("Error hashing password")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     "Error hashing password",
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, "Error hashing password", helper.ElapsedTime(start))
 	}
 	request.Password = hashResult
 
@@ -236,11 +204,7 @@ func (handler *UsersHandlerImpl) Register(c *fiber.Ctx) error {
 	userId, errRegister := handler.UsersRepository.Register(c, &req)
 	if errRegister != nil && userId == nil {
 		logrus.WithError(errRegister).Error("Failed to register user")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":        fiber.StatusInternalServerError,
-			"message":     errRegister.Error(),
-			"processTime": helper.ElapsedTime(start),
-		})
+		return helper.SendError(c, fiber.StatusInternalServerError, errRegister.Error(), helper.ElapsedTime(start))
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -289,14 +253,16 @@ func (handler *UsersHandlerImpl) FindUserProfileById(c *fiber.Ctx) error {
 // @Router /user/profile [put]
 func (handler *UsersHandlerImpl) UpdateProfileById(c *fiber.Ctx) error {
 
+	start := helper.StartTime()
+
+	logrus.Info("Update profile by id request received")
+
 	var request model.ProfileUpdateRequestBody
 	userId := helper.UserId
 
 	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": err.Error(),
-		})
+		logrus.WithError(err).Error("Failed to parse register request body")
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	reqData := model.ProfileUpdateRequest{
@@ -310,10 +276,8 @@ func (handler *UsersHandlerImpl) UpdateProfileById(c *fiber.Ctx) error {
 
 	err := handler.UsersRepository.UpdateProfileById(c, userId, reqData)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": err.Error(),
-		})
+		logrus.WithError(err).Error(err.Error())
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -334,29 +298,25 @@ func (handler *UsersHandlerImpl) UpdateProfileById(c *fiber.Ctx) error {
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /user/profile/:userId [get]
 func (handler *UsersHandlerImpl) GetProfileById(c *fiber.Ctx) error {
-	userId := c.Params("userId", "")
 
+	start := helper.StartTime()
+
+	userId := c.Params("userId", "")
 	if userId == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Invalid user id",
-		})
+		logrus.Error("Invalid user id")
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid user id", helper.ElapsedTime(start))
 	}
 
 	userIdVal, err := strconv.ParseUint(userId, 10, 32) // basis 10, 32-bit
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"code":    fiber.StatusBadRequest,
-			"message": "Invalid user id",
-		})
+		logrus.WithError(err).Error("Invalid user id")
+		return helper.SendError(c, fiber.StatusBadRequest, "Invalid user id", helper.ElapsedTime(start))
 	}
 
 	result, err := handler.UsersRepository.GetProfileById(c, uint(userIdVal))
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    fiber.StatusInternalServerError,
-			"message": err.Error(),
-		})
+		logrus.WithError(err).Error(err.Error())
+		return helper.SendError(c, fiber.StatusInternalServerError, err.Error(), helper.ElapsedTime(start))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
