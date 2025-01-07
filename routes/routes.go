@@ -1,29 +1,43 @@
 package routes
 
 import (
-	"fmt"
 	"project-app/handler/category"
-	proeject "project-app/handler/project"
+	project "project-app/handler/project"
 	"project-app/handler/users"
 	"project-app/helper"
+	categoryRepository "project-app/repository/category"
+	projectRepository "project-app/repository/project"
+	userRepository "project-app/repository/users"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 func SetupRoutes(app *fiber.App, db *gorm.DB, validate *validator.Validate) {
 
 	app.Use(func(c *fiber.Ctx) error {
-		fmt.Printf("Request: %s %s \n", c.Method(), c.OriginalURL())
+		logrus.WithFields(logrus.Fields{
+			"method": c.Method(),
+			"url":    c.OriginalURL(),
+			"ip":     c.IP(),
+		}).Info("Incoming request")
 		return c.Next()
 	})
 
-	userHandler := users.NewUsersHandler(db, validate)
-	categoryHandler := category.NewCategoryHandler(db, validate)
-	projectHandler := proeject.NewProjectHandler(db, validate)
+	// Repository
+	userRepository := userRepository.NewUsersRepository(db)
+	projectRepository := projectRepository.NewProjectRepository(db)
+	categoryRepository := categoryRepository.NewCategoryRepository(db)
 
+	// Handler
+	userHandler := users.NewUsersHandler(userRepository, validate)
+	categoryHandler := category.NewCategoryHandler(categoryRepository, validate)
+	projectHandler := project.NewProjectHandler(projectRepository, validate)
+
+	// Route
 	appGroup := app.Group("/api/v1")
 
 	// Swagger
