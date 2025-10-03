@@ -1,19 +1,22 @@
 # internal/domain/ - Business Domain Layer
 
 ## Purpose
+
 The heart of the application containing business logic, entities, and core interfaces. This layer is **framework-agnostic** and represents pure business rules.
 
 ## Structure
+
 ```
 domain/
-├── entities/              # Business entities (domain models)
-├── repositories/          # Data access interfaces
-└── services/             # Business logic interfaces
+├── entities/          # Business entities (domain models)
+├── repositories/      # Data access interfaces yang akan di implementasikan di infra -> database -> postgres
+└── services/          # Business logic interfaces yang akan di implementasikan di application -> services
 ```
 
 ## Responsibilities
 
 ### 📦 entities/
+
 - **Domain Models**: Core business objects with behavior
 - **Value Objects**: Immutable objects representing concepts
 - **Aggregates**: Groups of related entities
@@ -22,6 +25,7 @@ domain/
 **Example**: `User`, `Project`, `Category`, `ProjectTodolist`
 
 ### 🔄 repositories/
+
 - **Data Access Interfaces**: Abstract data operations
 - **Query Specifications**: Define complex queries
 - **Repository Contracts**: Define what data operations are needed
@@ -29,6 +33,7 @@ domain/
 **Example**: `UserRepository`, `ProjectRepository`
 
 ### ⚙️ services/
+
 - **Business Logic Interfaces**: Define business operations
 - **Domain Services**: Coordinate between entities
 - **Business Rules**: Complex business logic that doesn't fit in entities
@@ -38,6 +43,7 @@ domain/
 ## Design Principles
 
 ### ✅ What Goes Here
+
 - Business entities with behavior
 - Domain-specific validation rules
 - Business logic interfaces
@@ -45,6 +51,7 @@ domain/
 - Value objects and aggregates
 
 ### ❌ What Doesn't Go Here
+
 - Database-specific code
 - HTTP request/response models
 - Framework dependencies
@@ -52,6 +59,7 @@ domain/
 - Infrastructure concerns
 
 ## Entity Guidelines
+
 ```go
 // ✅ Good - Business logic in entity
 type Project struct {
@@ -79,6 +87,7 @@ type Project struct {
 ```
 
 ## Repository Interface Guidelines
+
 ```go
 // ✅ Good - Domain-focused interface
 type ProjectRepository interface {
@@ -95,6 +104,7 @@ type ProjectRepository interface {
 ```
 
 ## Testing
+
 - Focus on **business logic** testing
 - Mock external dependencies
 - Test domain rules and validations

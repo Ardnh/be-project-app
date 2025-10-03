@@ -58,3 +58,39 @@ Each directory has its own README.md explaining its purpose and responsibilities
 ## Contributing
 
 Please read the individual README files in each directory to understand the codebase structure and conventions.
+
+## Visual Application Flow
+
+┌─────────────────────────────────────────────────────────────┐
+│ Client (Postman/Browser) │
+└─────────────────────────────────────────────────────────────┘
+↓ HTTP Request
+┌─────────────────────────────────────────────────────────────┐
+│ Fiber Framework (Routing + Middleware) │
+│ app.Post("/api/v1/users", userHandler.CreateUserHandler) │
+└─────────────────────────────────────────────────────────────┘
+↓ c \*fiber.Ctx
+┌─────────────────────────────────────────────────────────────┐
+│ Handler Layer (interface/http/handler/) │
+│ - Parse request │
+│ - Validate input │
+│ - Call service │
+│ - Format response │
+└─────────────────────────────────────────────────────────────┘
+↓ DTO
+┌─────────────────────────────────────────────────────────────┐
+│ Service Layer (application/services/) │
+│ - Business workflow │
+│ - Call repository │
+│ - Orchestration │
+└─────────────────────────────────────────────────────────────┘
+↓ Entity
+┌─────────────────────────────────────────────────────────────┐
+│ Repository Layer (infrastructure/repository/) │
+│ - Database operations │
+│ - GORM queries │
+└─────────────────────────────────────────────────────────────┘
+↓
+┌─────────────────────────────────────────────────────────────┐
+│ Database (PostgreSQL) │
+└─────────────────────────────────────────────────────────────┘
