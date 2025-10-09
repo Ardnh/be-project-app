@@ -12,18 +12,16 @@ func init() {
 				CREATE TABLE IF NOT EXISTS projects (
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 					user_id UUID NOT NULL,
-					category_id UUID,
 					name VARCHAR(255) NOT NULL,
 					budget DECIMAL(15,2) DEFAULT 0,
+					category_name VARCHAR(255) NOT NULL,
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					deleted_at TIMESTAMP,
-					FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-					FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+					FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 				);
 
 				CREATE INDEX idx_projects_user_id ON projects(user_id);
-				CREATE INDEX idx_projects_category_id ON projects(category_id);
 				CREATE INDEX idx_projects_deleted_at ON projects(deleted_at);
 			`).Error
 		},

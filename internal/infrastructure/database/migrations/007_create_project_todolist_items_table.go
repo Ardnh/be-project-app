@@ -13,6 +13,7 @@ func init() {
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 					project_todolist_id UUID NOT NULL,
 					name VARCHAR(255) NOT NULL,
+					category_name VARCHAR(255) NOT NULL,
 					status VARCHAR(50) DEFAULT 'pending',
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

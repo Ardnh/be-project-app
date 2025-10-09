@@ -13,6 +13,8 @@ func init() {
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 					project_expense_id UUID NOT NULL,
 					amount DECIMAL(15,2) NOT NULL,
+					name VARCHAR(255) NOT NULL,
+					category_name VARCHAR(255) NOT NULL,
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					deleted_at TIMESTAMP,
