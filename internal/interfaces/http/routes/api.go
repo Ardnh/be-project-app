@@ -10,7 +10,7 @@ import (
 func SetupAPIRoutes(
 	app *fiber.App,
 	userHandler *handlers.UserHandler,
-	// projectHandler *handlers.ProjectHandler,
+	projectHandler *handlers.ProjectsHandler,
 ) {
 	// API v1 group
 	api := app.Group("/api/v1")
@@ -37,14 +37,14 @@ func SetupAPIRoutes(
 		}
 
 		// Project routes (contoh)
-		// projects := protected.Group("/projects")
-		// {
-		//     projects.Get("/", projectHandler.GetProjects)
-		//     projects.Get("/:id", projectHandler.GetProjectByID)
-		//     projects.Post("/", projectHandler.CreateProject)
-		//     projects.Put("/:id", projectHandler.UpdateProject)
-		//     projects.Delete("/:id", projectHandler.DeleteProject)
-		// }
+		projects := protected.Group("/projects")
+		{
+			projects.Get("/:user_id", projectHandler.GetProjectsByUserId)
+			// projects.Get("/:id", projectHandler.GetProjectByID)
+			projects.Post("/", projectHandler.CreateProject)
+			// projects.Put("/:id", projectHandler.UpdateProject)
+			// projects.Delete("/:id", projectHandler.DeleteProject)
+		}
 	}
 
 	// Admin routes (require admin role)

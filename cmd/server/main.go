@@ -38,16 +38,23 @@ func main() {
 
 	// Repository | interface -> infrastructure -> database -> repository
 	userRepository := repository.NewUserRepository(db, redisDb)
+	projectsRepository := repository.NewProjectsRepository(db, redisDb)
 
 	// Service | internal -> application -> service
 	userService := services.NewUserService(userRepository)
+	projectsService := services.NewProjectsService(projectsRepository)
 
 	// Handler | internal -> interfaces -> http -> handler
 	userHandler := handlers.NewUserHandler(userService, validator)
+	projectsHandler := handlers.NewProjectsHandler(projectsService, validator)
 	healthHandler := handlers.NewHealthHandler()
 
 	// Setup Routes
-	routes.SetupAPIRoutes(app, userHandler)
+	routes.SetupAPIRoutes(
+		app,
+		userHandler,
+		projectsHandler,
+	)
 	routes.SetupHealthRoutes(app, healthHandler)
 
 	log.Printf("🚀 Starting application in %s mode on port %s\n", cfg.App.Env, cfg.App.Port)

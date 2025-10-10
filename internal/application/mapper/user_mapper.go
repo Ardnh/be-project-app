@@ -14,7 +14,8 @@ func ToUserDTO(user *entities.User) *dto.UserDto {
 
 func ToUserEntities(user *dto.CreateUserDto) *entities.User {
 	return &entities.User{
-		Name:  user.Username,
-		Email: user.Email,
+		Username: user.Username,
+		Email:    user.Email,
+		Password: user.Password,
 	}
 }
