@@ -40,10 +40,12 @@ func SetupAPIRoutes(
 		projects := protected.Group("/projects")
 		{
 			projects.Get("/:user_id", projectHandler.GetProjectsByUserId)
-			// projects.Get("/:id", projectHandler.GetProjectByID)
+			projects.Get("/:id", projectHandler.GetProjectById)
+			projects.Get("/summary/:user_id", projectHandler.GetAllProjectSummaryByUserId)
 			projects.Post("/", projectHandler.CreateProject)
-			// projects.Put("/:id", projectHandler.UpdateProject)
-			// projects.Delete("/:id", projectHandler.DeleteProject)
+			projects.Put("/:id", projectHandler.UpdateProject)
+			projects.Delete("/:id", projectHandler.DeleteProject)
+			// projects.Get("/:id", projectHandler.GetProjectByID)
 		}
 	}
 

@@ -20,9 +20,18 @@ func NewProjectsService(repo repositories.ProjectsRepository) services.ProjectsS
 	}
 }
 
-func (r *projectsService) GetProjectsByUserID(ctx context.Context, id string) ([]*dto.ProjectsDto, error) {
+func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string, params dto.GetProjectsParams) ([]*dto.ProjectsDto, error) {
 
-	projects, err := r.projectsRepo.FindByUserID(ctx, id)
+	paramsEntities := entities.GetProjectsParams{
+		CategoryName: params.CategoryName,
+		Search:       params.Search,
+		Limit:        params.Limit,
+		Offset:       params.Offset,
+		SortBy:       params.SortBy,
+		SortOrder:    params.SortOrder,
+	}
+
+	projects, err := r.projectsRepo.FindByUserID(ctx, userId, paramsEntities)
 	if err != nil {
 		return nil, err
 	}
@@ -34,22 +43,74 @@ func (r *projectsService) GetProjectsByUserID(ctx context.Context, id string) ([
 
 func (r *projectsService) GetProjectsByID(ctx context.Context, id string) (*dto.ProjectsDto, error) {
 
-	return nil, nil
-}
-func (r *projectsService) GetAllUProjects(ctx context.Context) ([]*dto.ProjectsDto, error) {
+	projectEntities, err := r.projectsRepo.FindByProjectId(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	projectDto := mapper.ToProjectDTO(projectEntities)
+
+	return projectDto, nil
 }
-func (r *projectsService) CreateProjects(ctx context.Context, user *dto.CreateProjectsDto) error {
+
+func (r *projectsService) GetAllProjects(ctx context.Context, params dto.GetProjectsParams) ([]*dto.ProjectsDto, error) {
+
+	paramsEntities := entities.GetProjectsParams{
+		CategoryName: params.CategoryName,
+		Search:       params.Search,
+		Limit:        params.Limit,
+		Offset:       params.Offset,
+		SortBy:       params.SortBy,
+		SortOrder:    params.SortOrder,
+	}
+
+	projects, err := r.projectsRepo.FindAll(ctx, paramsEntities)
+	if err != nil {
+		return nil, err
+	}
+
+	projectsDto := mapper.ToProjectsDTO(projects)
+	return projectsDto, nil
+}
+
+func (r *projectsService) CreateProjects(ctx context.Context, project *dto.CreateProjectsDto) error {
 
 	projectEntities := &entities.Project{
-		UserID:       user.UserID,
-		Name:         user.Name,
-		Budget:       user.Budget,
-		CategoryName: user.CategoryName,
+		UserID:       project.UserID,
+		Name:         project.Name,
+		Budget:       project.Budget,
+		CategoryName: project.CategoryName,
 	}
 
 	err := r.projectsRepo.Create(ctx, projectEntities)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *projectsService) UpdateProjects(ctx context.Context, id string, project *dto.UpdateProjectsDto) error {
+
+	projectEntities := &entities.Project{
+		ID:           id,
+		UserID:       project.UserID,
+		Name:         project.Name,
+		Budget:       project.Budget,
+		CategoryName: project.CategoryName,
+	}
+
+	err := r.projectsRepo.Update(ctx, projectEntities)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *projectsService) DeleteProjects(ctx context.Context, id string) error {
+
+	err := r.projectsRepo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}

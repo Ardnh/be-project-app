@@ -12,3 +12,12 @@ type Project struct {
 	UpdatedAt    time.Time  `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt    *time.Time `json:"deleted_at,omitempty" gorm:"index:idx_projects_deleted_at"`
 }
+
+type GetProjectsParams struct {
+	CategoryName string
+	Search       string
+	Limit        int
+	Offset       int
+	SortBy       string
+	SortOrder    string
+}
