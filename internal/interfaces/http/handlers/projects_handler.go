@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -130,6 +131,8 @@ func (h *ProjectsHandler) GetProjectById(c *fiber.Ctx) error {
 	if err != nil {
 		return http.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to get project", err.Error())
 	}
+
+	fmt.Println(project)
 
 	return http.SuccessResponse(c, fiber.StatusOK, "Success get project", project)
 }

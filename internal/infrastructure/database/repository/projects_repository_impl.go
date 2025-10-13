@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Ardnh/be-project-app/internal/domain"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
 	"github.com/go-redis/redis/v8"
@@ -27,18 +26,23 @@ func NewProjectsRepository(db *gorm.DB, redis *redis.Client) repositories.Projec
 	}
 }
 
-func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string, params entities.GetProjectsParams) ([]*entities.Project, error) {
-	var projects []*entities.Project
+func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string, params entities.GetProjectsParams) ([]*entities.Projects, error) {
+	var projects []*entities.Projects
+	// var projectWithTodolistAndExpenses *entities.ProjectWithTodolistAndExpenses
 
-	query := r.db.WithContext(ctx).Where("user_id = ?", userId)
+	query := r.
+		db.
+		WithContext(ctx).
+		Table("projects").
+		Where("user_id = ?", userId)
 
 	// Filter by category name jika categoryName tidak kosong
 	if params.CategoryName != "" {
-		query = query.Where("category_name=?", params.CategoryName)
+		query = query.Where("category_name LIKE ?", params.CategoryName)
 	}
 
 	if params.Search != "" {
-		query = query.Where("name=?", params.Search)
+		query = query.Where("name LIKE ?", params.Search)
 	}
 
 	// Apply sorting
@@ -57,20 +61,57 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	return projects, nil
 }
 
-func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Project) error {
+func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Projects) error {
 	return r.db.WithContext(ctx).Create(project).Error
 }
 
-func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, id string) (*entities.Project, error) {
-	var project entities.Project
+func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId string) (*entities.Projects, error) {
+	// Step 1: Get project
+	var project entities.Projects
+	err := r.db.
+		WithContext(ctx).
+		Where("id = ?", projectId).
+		Where("deleted_at IS NULL").
+		First(&project).Error
 
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&project).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrProjectNotFound
+			return nil, fmt.Errorf("project not found")
 		}
-		return nil, err
+		return nil, fmt.Errorf("failed to find project by id: %w", err)
 	}
+
+	// Step 2: Get project expenses
+	var expenses []entities.ProjectExpenses
+	err = r.db.
+		WithContext(ctx).
+		Where("project_id = ?", projectId).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Find(&expenses).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load expenses: %w", err)
+	}
+
+	// Step 3: Load items untuk setiap expense
+	for i := range expenses {
+		var items []entities.ProjectExpenseItem
+		err = r.db.
+			WithContext(ctx).
+			Where("project_expense_id = ?", expenses[i].ID).
+			Where("deleted_at IS NULL").
+			Order("created_at DESC").
+			Find(&items).Error
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to load expense items: %w", err)
+		}
+
+		expenses[i].ProjectExpenseItem = items
+	}
+
+	project.ProjectExpenses = expenses
 
 	return &project, nil
 }
@@ -80,9 +121,9 @@ func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context
 	return nil, nil
 }
 
-func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.GetProjectsParams) ([]*entities.Project, error) {
+func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.GetProjectsParams) ([]*entities.Projects, error) {
 
-	var projects []*entities.Project
+	var projects []*entities.Projects
 
 	query := r.db.WithContext(ctx)
 
@@ -111,7 +152,7 @@ func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.Ge
 	return projects, nil
 }
 
-func (r *projectsRepositoryImpl) Update(ctx context.Context, project *entities.Project) error {
+func (r *projectsRepositoryImpl) Update(ctx context.Context, project *entities.Projects) error {
 
 	result := r.db.WithContext(ctx).
 		Model(project).
@@ -130,5 +171,5 @@ func (r *projectsRepositoryImpl) Update(ctx context.Context, project *entities.P
 
 func (r *projectsRepositoryImpl) Delete(ctx context.Context, id string) error {
 
-	return r.db.WithContext(ctx).Where("id=?", id).Delete(entities.Project{}).Error
+	return r.db.WithContext(ctx).Where("id=?", id).Delete(entities.Projects{}).Error
 }

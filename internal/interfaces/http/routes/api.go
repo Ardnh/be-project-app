@@ -11,6 +11,7 @@ func SetupAPIRoutes(
 	app *fiber.App,
 	userHandler *handlers.UserHandler,
 	projectHandler *handlers.ProjectsHandler,
+	projectExpensesHandler *handlers.ProjectsExpensesHandler,
 ) {
 	// API v1 group
 	api := app.Group("/api/v1")
@@ -40,12 +41,18 @@ func SetupAPIRoutes(
 		projects := protected.Group("/projects")
 		{
 			projects.Get("/:user_id", projectHandler.GetProjectsByUserId)
-			projects.Get("/:id", projectHandler.GetProjectById)
+			projects.Get("/by-id/:id", projectHandler.GetProjectById)
 			projects.Get("/summary/:user_id", projectHandler.GetAllProjectSummaryByUserId)
 			projects.Post("/", projectHandler.CreateProject)
 			projects.Put("/:id", projectHandler.UpdateProject)
 			projects.Delete("/:id", projectHandler.DeleteProject)
 			// projects.Get("/:id", projectHandler.GetProjectByID)
+		}
+
+		// Project Expenses
+		projectsExpenses := protected.Group("/projects-expenses")
+		{
+			projectsExpenses.Post("/", projectExpensesHandler.Create)
 		}
 	}
 

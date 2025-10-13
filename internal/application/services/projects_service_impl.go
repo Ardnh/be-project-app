@@ -41,14 +41,14 @@ func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string
 	return projectsDto, nil
 }
 
-func (r *projectsService) GetProjectsByID(ctx context.Context, id string) (*dto.ProjectsDto, error) {
+func (r *projectsService) GetProjectsByID(ctx context.Context, id string) (*dto.ProjectWithTodolistAndExpensesDto, error) {
 
 	projectEntities, err := r.projectsRepo.FindByProjectId(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	projectDto := mapper.ToProjectDTO(projectEntities)
+	projectDto := mapper.ToProjectWithTodolistAndExpensesDTO(projectEntities)
 
 	return projectDto, nil
 }
@@ -75,7 +75,7 @@ func (r *projectsService) GetAllProjects(ctx context.Context, params dto.GetProj
 
 func (r *projectsService) CreateProjects(ctx context.Context, project *dto.CreateProjectsDto) error {
 
-	projectEntities := &entities.Project{
+	projectEntities := &entities.Projects{
 		UserID:       project.UserID,
 		Name:         project.Name,
 		Budget:       project.Budget,
@@ -92,7 +92,7 @@ func (r *projectsService) CreateProjects(ctx context.Context, project *dto.Creat
 
 func (r *projectsService) UpdateProjects(ctx context.Context, id string, project *dto.UpdateProjectsDto) error {
 
-	projectEntities := &entities.Project{
+	projectEntities := &entities.Projects{
 		ID:           id,
 		UserID:       project.UserID,
 		Name:         project.Name,
