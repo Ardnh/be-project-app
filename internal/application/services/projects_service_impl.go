@@ -117,3 +117,13 @@ func (r *projectsService) DeleteProjects(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (r *projectsService) GetProjectCategoryByUserId(ctx context.Context, userId string) ([]string, error) {
+
+	category, err := r.projectsRepo.FindProjectCategoryByUserID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return category, nil
+}

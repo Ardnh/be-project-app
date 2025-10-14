@@ -16,7 +16,7 @@ import (
 )
 
 type ProjectsHandler struct {
-	projectsService services.ProjectsService // ✅ Interface dari service layer
+	projectsService services.ProjectsService
 	validator       *validator.Validate
 }
 
@@ -191,4 +191,19 @@ func (h *ProjectsHandler) DeleteProject(c *fiber.Ctx) error {
 	}
 
 	return http.SuccessResponse(c, fiber.StatusOK, "Successfully deleted project", nil)
+}
+
+func (s *ProjectsHandler) GetProjectCategoryByUserId(c *fiber.Ctx) error {
+
+	id := c.Params("user_id", "")
+	if id == "" {
+		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, "ID not provided", nil)
+	}
+
+	result, err := s.projectsService.GetProjectCategoryByUserId(c.Context(), id)
+	if err != nil {
+		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
+	}
+
+	return http.SuccessResponse(c, fiber.StatusOK, "Successfully get project category", result)
 }

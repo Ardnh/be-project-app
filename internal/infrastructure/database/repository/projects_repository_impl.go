@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
@@ -112,13 +114,51 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 	}
 
 	project.ProjectExpenses = expenses
-
 	return &project, nil
 }
 
+// Ubah return type ke []string (lebih idiomatic)
 func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context, userId string) ([]string, error) {
+	if userId == "" {
+		return nil, errors.New("user_id cannot be empty")
+	}
 
-	return nil, nil
+	// Cache key
+	cacheKey := fmt.Sprintf("user_categories:%s", userId)
+
+	// Try get from cache
+	if r.redis != nil {
+		cached, err := r.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			var categories []string
+			if err := json.Unmarshal([]byte(cached), &categories); err == nil {
+				return categories, nil
+			}
+		}
+	}
+
+	// Query database
+	var categories []string
+	err := r.db.WithContext(ctx).
+		Model(&entities.Projects{}).
+		Select("DISTINCT category_name").
+		Where("user_id = ?", userId).
+		Where("category_name IS NOT NULL AND category_name != ''").
+		Order("category_name ASC").
+		Pluck("category_name", &categories).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find categories: %w", err)
+	}
+
+	// Save to cache
+	if r.redis != nil && len(categories) > 0 {
+		if data, err := json.Marshal(categories); err == nil {
+			r.redis.Set(ctx, cacheKey, data, 5*time.Minute) // TTL 5 menit
+		}
+	}
+
+	return categories, nil
 }
 
 func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.GetProjectsParams) ([]*entities.Projects, error) {

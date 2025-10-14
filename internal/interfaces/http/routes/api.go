@@ -42,6 +42,7 @@ func SetupAPIRoutes(
 		{
 			projects.Get("/:user_id", projectHandler.GetProjectsByUserId)
 			projects.Get("/by-id/:id", projectHandler.GetProjectById)
+			projects.Get("/category/:user_id", projectHandler.GetProjectCategoryByUserId)
 			projects.Get("/summary/:user_id", projectHandler.GetAllProjectSummaryByUserId)
 			projects.Post("/", projectHandler.CreateProject)
 			projects.Put("/:id", projectHandler.UpdateProject)
