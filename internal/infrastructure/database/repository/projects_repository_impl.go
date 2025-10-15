@@ -32,19 +32,17 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	var projects []*entities.Projects
 	// var projectWithTodolistAndExpenses *entities.ProjectWithTodolistAndExpenses
 
+	fmt.Println(params.Search)
+
 	query := r.
 		db.
 		WithContext(ctx).
 		Table("projects").
 		Where("user_id = ?", userId)
 
-	// Filter by category name jika categoryName tidak kosong
-	if params.CategoryName != "" {
-		query = query.Where("category_name LIKE ?", params.CategoryName)
-	}
-
 	if params.Search != "" {
-		query = query.Where("name LIKE ?", params.Search)
+		searchPattern := "%" + params.Search + "%" // Tambahkan wildcard
+		query = query.Where("name LIKE ? OR category_name LIKE ?", searchPattern, searchPattern)
 	}
 
 	// Apply sorting
@@ -72,6 +70,7 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 	var project entities.Projects
 	err := r.db.
 		WithContext(ctx).
+		Preload("ProjectExpenses").
 		Where("id = ?", projectId).
 		Where("deleted_at IS NULL").
 		First(&project).Error
@@ -87,6 +86,7 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 	var expenses []entities.ProjectExpenses
 	err = r.db.
 		WithContext(ctx).
+		Model(&entities.ProjectExpenses{}).
 		Where("project_id = ?", projectId).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -96,6 +96,7 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 		return nil, fmt.Errorf("failed to load expenses: %w", err)
 	}
 
+	project.ProjectExpenses = expenses
 	// Step 3: Load items untuk setiap expense
 	for i := range expenses {
 		var items []entities.ProjectExpenseItem
@@ -113,7 +114,6 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 		expenses[i].ProjectExpenseItem = items
 	}
 
-	project.ProjectExpenses = expenses
 	return &project, nil
 }
 
@@ -168,12 +168,10 @@ func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.Ge
 	query := r.db.WithContext(ctx)
 
 	// Filter by category name jika categoryName tidak kosong
-	if params.CategoryName != "" {
-		query = query.Where("category_name=?", params.CategoryName)
-	}
-
 	if params.Search != "" {
-		query = query.Where("name=?", params.Search)
+		query = query.
+			Where("name=?", params.Search).
+			Where("category_name=?", params.Search)
 	}
 
 	// Apply sorting
@@ -211,5 +209,5 @@ func (r *projectsRepositoryImpl) Update(ctx context.Context, project *entities.P
 
 func (r *projectsRepositoryImpl) Delete(ctx context.Context, id string) error {
 
-	return r.db.WithContext(ctx).Where("id=?", id).Delete(entities.Projects{}).Error
+	return r.db.WithContext(ctx).Where("id=?", id).Delete(&entities.Projects{}).Error
 }

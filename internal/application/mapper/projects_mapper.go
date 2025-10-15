@@ -30,8 +30,8 @@ func ToProjectDTO(project *entities.Projects) *dto.ProjectsDto {
 }
 
 func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.ProjectWithTodolistAndExpensesDto {
-
-	expenses := make([]*dto.ProjectsExpensesDto, len(project.ProjectExpenses))
+	// Length 0, capacity 3
+	expenses := make([]*dto.ProjectsExpensesDto, 0, len(project.ProjectExpenses))
 
 	for _, expensesItem := range project.ProjectExpenses {
 		expenses = append(expenses, ToProjectExpensesDTO(&expensesItem))
@@ -49,9 +49,26 @@ func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.Projec
 
 func ToProjectExpensesDTO(expenses *entities.ProjectExpenses) *dto.ProjectsExpensesDto {
 
+	expensesItem := make([]*dto.ProjectExpensesItemDto, 0, len(expenses.ProjectExpenseItem))
+
+	for _, item := range expenses.ProjectExpenseItem {
+		expensesItem = append(expensesItem, ToProjectExpensesItemDTO(item))
+	}
+
 	return &dto.ProjectsExpensesDto{
-		ID:        expenses.ID,
-		ProjectID: expenses.ProjectID,
-		Name:      expenses.Name,
+		ID:           expenses.ID,
+		ProjectID:    expenses.ProjectID,
+		Name:         expenses.Name,
+		ExpensesItem: expensesItem,
+	}
+}
+
+func ToProjectExpensesItemDTO(expensesItem entities.ProjectExpenseItem) *dto.ProjectExpensesItemDto {
+	return &dto.ProjectExpensesItemDto{
+		ID:                expensesItem.ID,
+		ProjectExpensesId: expensesItem.ProjectExpensesID,
+		Name:              expensesItem.Name,
+		Amount:            expensesItem.Amount,
+		CategoryName:      expensesItem.CategoryName,
 	}
 }

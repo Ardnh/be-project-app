@@ -17,7 +17,7 @@ type Projects struct {
 	UserID       string  `gorm:"index" json:"user_id"`
 	Name         string  `gorm:"size:200" json:"name"`
 	Budget       float64 `json:"budget"`
-	CategoryName string  `gorm:"size:100" json:"category_name"`
+	CategoryName string  `gorm:"size:200" json:"category_name"`
 
 	// Relasi
 	User            *User             `gorm:"foreignKey:UserID" json:"user,omitempty"`
@@ -30,12 +30,11 @@ type Projects struct {
 }
 
 type GetProjectsParams struct {
-	CategoryName string
-	Search       string
-	Limit        int
-	Offset       int
-	SortBy       string
-	SortOrder    string
+	Search    string
+	Limit     int
+	Offset    int
+	SortBy    string
+	SortOrder string
 }
 
 type ProjectWithTodolistAndExpenses struct {

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -92,18 +91,16 @@ func (h *ProjectsHandler) GetProjectsByUserId(c *fiber.Ctx) error {
 	}
 
 	// 3. Optional: Get additional filters
-	categoryName := c.Query("category", "")
-	projectName := c.Query("projectName", "")
+	projectName := c.Query("search", "")
 
 	// 4. Build request DTO/params
 	params := dto.GetProjectsParams{
-		UserID:       userId,
-		CategoryName: categoryName,
-		Search:       projectName,
-		Limit:        limit,
-		Offset:       offset,
-		SortBy:       sortBy,
-		SortOrder:    sortOrder,
+		UserID:    userId,
+		Search:    projectName,
+		Limit:     limit,
+		Offset:    offset,
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
 	}
 
 	// 5. Call service
@@ -131,8 +128,6 @@ func (h *ProjectsHandler) GetProjectById(c *fiber.Ctx) error {
 	if err != nil {
 		return http.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to get project", err.Error())
 	}
-
-	fmt.Println(project)
 
 	return http.SuccessResponse(c, fiber.StatusOK, "Success get project", project)
 }
@@ -162,6 +157,12 @@ func (h *ProjectsHandler) UpdateProject(c *fiber.Ctx) error {
 	}
 
 	var req dto.UpdateProjectsDto
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
 
 	// Validate
 	if err := h.validator.Struct(&req); err != nil {

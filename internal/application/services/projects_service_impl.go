@@ -23,12 +23,11 @@ func NewProjectsService(repo repositories.ProjectsRepository) services.ProjectsS
 func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string, params dto.GetProjectsParams) ([]*dto.ProjectsDto, error) {
 
 	paramsEntities := entities.GetProjectsParams{
-		CategoryName: params.CategoryName,
-		Search:       params.Search,
-		Limit:        params.Limit,
-		Offset:       params.Offset,
-		SortBy:       params.SortBy,
-		SortOrder:    params.SortOrder,
+		Search:    params.Search,
+		Limit:     params.Limit,
+		Offset:    params.Offset,
+		SortBy:    params.SortBy,
+		SortOrder: params.SortOrder,
 	}
 
 	projects, err := r.projectsRepo.FindByUserID(ctx, userId, paramsEntities)
@@ -56,12 +55,11 @@ func (r *projectsService) GetProjectsByID(ctx context.Context, id string) (*dto.
 func (r *projectsService) GetAllProjects(ctx context.Context, params dto.GetProjectsParams) ([]*dto.ProjectsDto, error) {
 
 	paramsEntities := entities.GetProjectsParams{
-		CategoryName: params.CategoryName,
-		Search:       params.Search,
-		Limit:        params.Limit,
-		Offset:       params.Offset,
-		SortBy:       params.SortBy,
-		SortOrder:    params.SortOrder,
+		Search:    params.Search,
+		Limit:     params.Limit,
+		Offset:    params.Offset,
+		SortBy:    params.SortBy,
+		SortOrder: params.SortOrder,
 	}
 
 	projects, err := r.projectsRepo.FindAll(ctx, paramsEntities)

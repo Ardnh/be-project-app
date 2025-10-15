@@ -8,11 +8,10 @@ type Params struct {
 }
 
 type GetProjectsParams struct {
-	UserID       string `json:"user_id"`
-	CategoryName string `json:"category_name,omitempty"`
-	Search       string `json:"search,omitempty"`
-	Limit        int    `json:"limit"`
-	Offset       int    `json:"offset"`
-	SortBy       string `json:"sort_by"`
-	SortOrder    string `json:"sort_order"`
+	UserID    string `json:"user_id"`
+	Search    string `json:"search,omitempty"`
+	Limit     int    `json:"limit"`
+	Offset    int    `json:"offset"`
+	SortBy    string `json:"sort_by"`
+	SortOrder string `json:"sort_order"`
 }

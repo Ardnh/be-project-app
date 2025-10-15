@@ -9,22 +9,22 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ProjectsExpensesHandler struct {
-	projectsExpensesService services.ProjectsExpensesService
-	validator               *validator.Validate
+type ProjectsExpensesItemHandler struct {
+	projectsService services.ProjectsExpensesItemService
+	validator       *validator.Validate
 }
 
-// Constructor - return *UserHandler (concrete type)
-func NewProjectsExpensesHandler(projectsExpensesService services.ProjectsExpensesService, validator *validator.Validate) *ProjectsExpensesHandler {
-	return &ProjectsExpensesHandler{
-		projectsExpensesService: projectsExpensesService,
-		validator:               validator,
+// Constructor - return *NewProjectsExpensesItemHandler (concrete type)
+func NewProjectsExpensesItemHandler(projectsService services.ProjectsExpensesItemService, validator *validator.Validate) *ProjectsExpensesItemHandler {
+	return &ProjectsExpensesItemHandler{
+		projectsService: projectsService,
+		validator:       validator,
 	}
 }
 
-func (h *ProjectsExpensesHandler) Create(c *fiber.Ctx) error {
+func (h *ProjectsExpensesItemHandler) Create(c *fiber.Ctx) error {
 
-	var req dto.CreateProjectsExpensesDto
+	var req dto.CreateProjectExpensesItemDto
 	if err := c.BodyParser(&req); err != nil {
 		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, err.Error(), fiber.Map{
 			"error": "Invalid request body",
@@ -38,22 +38,22 @@ func (h *ProjectsExpensesHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.projectsExpensesService.CreateProjectsExpenses(c.Context(), &req)
+	err := h.projectsService.CreateProjectsExpensesItem(c.Context(), &req)
 	if err != nil {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusCreated, "Project expenses created", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item created", nil)
 }
 
-func (h *ProjectsExpensesHandler) Update(c *fiber.Ctx) error {
+func (h *ProjectsExpensesItemHandler) Update(c *fiber.Ctx) error {
 
 	id := c.Params("id", "")
 	if id == "" {
 		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, "ID not provided", nil)
 	}
 
-	var req dto.UpdateProjectsExpensesDto
+	var req dto.UpdateProjectExpensesItemDto
 	if err := c.BodyParser(&req); err != nil {
 		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, err.Error(), fiber.Map{
 			"error": "Invalid request body",
@@ -67,25 +67,25 @@ func (h *ProjectsExpensesHandler) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.projectsExpensesService.UpdateProjectsExpenses(c.Context(), id, &req)
+	err := h.projectsService.UpdateProjectsExpensesItem(c.Context(), id, &req)
 	if err != nil {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses updated", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item updated", nil)
 }
 
-func (h *ProjectsExpensesHandler) Delete(c *fiber.Ctx) error {
+func (h *ProjectsExpensesItemHandler) Delete(c *fiber.Ctx) error {
 
 	id := c.Params("id", "")
 	if id == "" {
 		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, "ID not provided", nil)
 	}
 
-	err := h.projectsExpensesService.DeleteProjectsExpenses(c.Context(), id)
+	err := h.projectsService.DeleteProjectsExpensesItem(c.Context(), id)
 	if err != nil {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses deleted", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item deleted", nil)
 }

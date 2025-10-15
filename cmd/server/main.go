@@ -40,16 +40,19 @@ func main() {
 	userRepository := repository.NewUserRepository(db, redisDb)
 	projectsRepository := repository.NewProjectsRepository(db, redisDb)
 	projectsExpensesRepository := repository.NewProjectsExpensesRepository(db, redisDb)
+	projectsExpensesItemRepository := repository.NewProjectExpensesItemRepository(db, redisDb)
 
 	// Service | internal -> application -> service
 	userService := services.NewUserService(userRepository)
 	projectsService := services.NewProjectsService(projectsRepository)
 	projectsExpensesService := services.NewProjectExpensesService(projectsExpensesRepository)
+	projectsExpensesItemService := services.NewProjectExpensesItemService(projectsExpensesItemRepository)
 
 	// Handler | internal -> interfaces -> http -> handler
 	userHandler := handlers.NewUserHandler(userService, validator)
 	projectsHandler := handlers.NewProjectsHandler(projectsService, validator)
 	projectsExpensesHandler := handlers.NewProjectsExpensesHandler(projectsExpensesService, validator)
+	projectsExpensesItemHandler := handlers.NewProjectsExpensesItemHandler(projectsExpensesItemService, validator)
 	healthHandler := handlers.NewHealthHandler()
 
 	// Setup Routes
@@ -58,6 +61,7 @@ func main() {
 		userHandler,
 		projectsHandler,
 		projectsExpensesHandler,
+		projectsExpensesItemHandler,
 	)
 	routes.SetupHealthRoutes(app, healthHandler)
 

@@ -12,6 +12,7 @@ func SetupAPIRoutes(
 	userHandler *handlers.UserHandler,
 	projectHandler *handlers.ProjectsHandler,
 	projectExpensesHandler *handlers.ProjectsExpensesHandler,
+	projectExpensesItemHandler *handlers.ProjectsExpensesItemHandler,
 ) {
 	// API v1 group
 	api := app.Group("/api/v1")
@@ -51,9 +52,19 @@ func SetupAPIRoutes(
 		}
 
 		// Project Expenses
-		projectsExpenses := protected.Group("/projects-expenses")
+		projectsExpenses := protected.Group("/project-expenses")
 		{
 			projectsExpenses.Post("/", projectExpensesHandler.Create)
+			projectsExpenses.Put("/:id", projectExpensesHandler.Update)
+			projectsExpenses.Delete("/:id", projectExpensesHandler.Delete)
+		}
+
+		// Project Expenses Item
+		projectExpensesItem := protected.Group("/project-expenses-item")
+		{
+			projectExpensesItem.Post("/", projectExpensesHandler.Create)
+			projectExpensesItem.Put("/:id", projectExpensesHandler.Update)
+			projectExpensesItem.Delete("/:id", projectExpensesHandler.Delete)
 		}
 	}
 

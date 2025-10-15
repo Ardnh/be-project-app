@@ -25,14 +25,27 @@ func NewProjectsExpensesRepository(db *gorm.DB, redis *redis.Client) repositorie
 }
 
 func (r *projectsExpensesRepositoryImpl) Create(ctx context.Context, expenses *entities.ProjectExpenses) error {
-
 	return r.db.WithContext(ctx).Create(expenses).Error
 }
 func (r *projectsExpensesRepositoryImpl) Update(ctx context.Context, expenses *entities.ProjectExpenses) error {
 
-	return nil
-}
-func (r *projectsExpensesRepositoryImpl) Delete(ctx context.Context, id string) error {
+	result := r.db.
+		WithContext(ctx).
+		Model(&entities.ProjectExpenses{}).
+		Where("id = ?", expenses.ID).
+		Updates(expenses)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 
 	return nil
+}
+
+func (r *projectsExpensesRepositoryImpl) Delete(ctx context.Context, id string) error {
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.ProjectExpenses{}).Error
 }
