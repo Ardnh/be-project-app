@@ -38,8 +38,9 @@ type RedisConfig struct {
 }
 
 type AppConfig struct {
-	Env  string
-	Port string
+	Env       string
+	Port      string
+	JWTSecret string
 }
 
 // LoadConfig membaca config dari .env
@@ -69,8 +70,9 @@ func LoadConfig() *Config {
 			PoolSize: getEnvAsInt("REDIS_POOL_SIZE", 10),
 		},
 		App: AppConfig{
-			Env:  getEnv("APP_ENV", "development"),
-			Port: getEnv("APP_PORT", "8080"),
+			Env:       getEnv("APP_ENV", "development"),
+			Port:      getEnv("APP_PORT", "8080"),
+			JWTSecret: getEnv("APP_JWT_SECRET", ""),
 		},
 	}
 }

@@ -72,3 +72,16 @@ func ToProjectExpensesItemDTO(expensesItem entities.ProjectExpenseItems) *dto.Pr
 		CategoryName:      expensesItem.CategoryName,
 	}
 }
+
+func ToProjectCategorySummaryDTO(projectCategory []*entities.ProjectCategorySummary) []*dto.ProjectCategorySummaryDto {
+
+	var result = make([]*dto.ProjectCategorySummaryDto, 0, len(projectCategory))
+	for _, item := range projectCategory {
+		result = append(result, &dto.ProjectCategorySummaryDto{
+			CategoryName: item.CategoryName,
+			Total:        item.Total,
+		})
+	}
+
+	return result
+}

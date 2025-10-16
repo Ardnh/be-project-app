@@ -13,16 +13,17 @@ func SetupAPIRoutes(
 	projectHandler *handlers.ProjectsHandler,
 	projectExpensesHandler *handlers.ProjectsExpensesHandler,
 	projectExpensesItemHandler *handlers.ProjectsExpensesItemHandler,
+	authHandler *handlers.AuthHandlers,
 ) {
 	// API v1 group
 	api := app.Group("/api/v1")
 
 	// Public routes
-	// public := api.Group("/")
+	public := api.Group("/")
 	{
 		// Auth routes (nanti)
-		// public.Post("/login", authHandler.Login)
-		// public.Post("/register", authHandler.Register)
+		public.Post("/login", authHandler.Login)
+		public.Post("/register", authHandler.Register)
 	}
 
 	// Protected routes (require authentication)

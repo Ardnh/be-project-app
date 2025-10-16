@@ -118,7 +118,8 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 }
 
 // Ubah return type ke []string (lebih idiomatic)
-func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context, userId string) ([]string, error) {
+func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context, userId string) ([]*entities.ProjectCategorySummary, error) {
+
 	if userId == "" {
 		return nil, errors.New("user_id cannot be empty")
 	}
@@ -130,7 +131,7 @@ func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context
 	if r.redis != nil {
 		cached, err := r.redis.Get(ctx, cacheKey).Result()
 		if err == nil {
-			var categories []string
+			var categories []*entities.ProjectCategorySummary
 			if err := json.Unmarshal([]byte(cached), &categories); err == nil {
 				return categories, nil
 			}
@@ -138,14 +139,15 @@ func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context
 	}
 
 	// Query database
-	var categories []string
+	var categories []*entities.ProjectCategorySummary
 	err := r.db.WithContext(ctx).
 		Model(&entities.Projects{}).
-		Select("DISTINCT category_name").
+		Select("DISTINCT category_name, COUNT(*) as total").
 		Where("user_id = ?", userId).
 		Where("category_name IS NOT NULL AND category_name != ''").
 		Order("category_name ASC").
-		Pluck("category_name", &categories).Error
+		Group("category_name").
+		Scan(&categories).Error
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to find categories: %w", err)
@@ -164,7 +166,6 @@ func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context
 func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.GetProjectsParams) ([]*entities.Projects, error) {
 
 	var projects []*entities.Projects
-
 	query := r.db.WithContext(ctx)
 
 	// Filter by category name jika categoryName tidak kosong

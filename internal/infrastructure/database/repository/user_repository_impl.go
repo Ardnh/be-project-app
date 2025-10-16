@@ -79,3 +79,13 @@ func (r *userRepositoryImpl) ExistsByEmail(ctx context.Context, email string) (b
 	err := r.db.Model(&entities.User{}).Where("email = ?", email).Count(&count).Error
 	return count > 0, err
 }
+
+func (r *userRepositoryImpl) FindUserByEmail(ctx context.Context, email string) (*entities.User, error) {
+	var user *entities.User
+	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

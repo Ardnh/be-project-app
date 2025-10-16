@@ -18,6 +18,11 @@ type ProjectWithTodolistAndExpensesDto struct {
 	ProjectExpenses []*ProjectsExpensesDto `json:"project_expenses" validate:"required"`
 }
 
+type ProjectCategorySummaryDto struct {
+	CategoryName string `json:"category_name" validate:"required"`
+	Total        int    `json:"total" validate:"required"`
+}
+
 // ================ REQUEST DTO ====================
 type CreateProjectsDto struct {
 	UserID       string  `json:"user_id" validate:"required"`

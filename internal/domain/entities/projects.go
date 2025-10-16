@@ -48,3 +48,8 @@ type ProjectWithTodolistAndExpenses struct {
 	DeletedAt    *time.Time `gorm:"index:idx_projects_deleted_at"`
 	// ProjectExpensesWithItem []*ProjectExpensesWithItem `json:"project_expenses"`
 }
+
+type ProjectCategorySummary struct {
+	CategoryName string
+	Total        int
+}
