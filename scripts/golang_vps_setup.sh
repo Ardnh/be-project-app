@@ -81,6 +81,28 @@ cat > $PROJECT_DIR/docker-compose.yml << 'EOF'
 version: '3.8'
 
 services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: golang_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_logs:/var/log/nginx
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
@@ -90,8 +112,6 @@ services:
       POSTGRES_DB: ${DB_NAME:-myapp}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
-    ports:
-      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -108,8 +128,6 @@ services:
     container_name: golang_redis
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD:-redis123}
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -127,8 +145,8 @@ services:
       dockerfile: Dockerfile
     container_name: golang_app
     restart: always
-    ports:
-      - "${APP_PORT:-8080}:8080"
+    expose:
+      - "8080"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -150,6 +168,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  nginx_logs:
 
 networks:
   app_network:
@@ -217,6 +236,60 @@ APP_ENV=production
 EOF
 
 echo -e "${GREEN}.env.example file created${NC}"
+
+# ==========================================
+# Create Nginx configuration
+# ==========================================
+echo -e "\n${YELLOW}Creating Nginx configuration...${NC}"
+cat > $PROJECT_DIR/nginx.conf << 'EOF'
+upstream golang_backend {
+    server app:8080;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    client_max_body_size 100M;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    location / {
+        proxy_pass http://golang_backend;
+        proxy_http_version 1.1;
+
+        # Headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://golang_backend/health;
+        access_log off;
+    }
+}
+EOF
+
+echo -e "${GREEN}Nginx configuration created${NC}"
 
 # ==========================================
 # Create deployment script
