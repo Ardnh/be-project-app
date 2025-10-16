@@ -26,16 +26,12 @@ func (h *ProjectsExpensesItemHandler) Create(c *fiber.Ctx) error {
 
 	var req dto.CreateProjectExpensesItemDto
 	if err := c.BodyParser(&req); err != nil {
-		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, err.Error(), fiber.Map{
-			"error": "Invalid request body",
-		})
+		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, err.Error(), "Invalid request body")
 	}
 
 	// Validate
 	if err := h.validator.Struct(&req); err != nil {
-		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, err.Error(), fiber.Map{
-			"errors": validation_utils.FormatValidationErrors(err),
-		})
+		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, err.Error(), validation_utils.FormatValidationErrors(err))
 	}
 
 	err := h.projectsService.CreateProjectsExpensesItem(c.Context(), &req)

@@ -63,10 +63,10 @@ func ToProjectExpensesDTO(expenses *entities.ProjectExpenses) *dto.ProjectsExpen
 	}
 }
 
-func ToProjectExpensesItemDTO(expensesItem entities.ProjectExpenseItem) *dto.ProjectExpensesItemDto {
+func ToProjectExpensesItemDTO(expensesItem entities.ProjectExpenseItems) *dto.ProjectExpensesItemDto {
 	return &dto.ProjectExpensesItemDto{
 		ID:                expensesItem.ID,
-		ProjectExpensesId: expensesItem.ProjectExpensesID,
+		ProjectExpensesId: expensesItem.ProjectExpenseID,
 		Name:              expensesItem.Name,
 		Amount:            expensesItem.Amount,
 		CategoryName:      expensesItem.CategoryName,

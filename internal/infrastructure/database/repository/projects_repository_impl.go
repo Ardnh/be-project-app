@@ -99,7 +99,7 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 	project.ProjectExpenses = expenses
 	// Step 3: Load items untuk setiap expense
 	for i := range expenses {
-		var items []entities.ProjectExpenseItem
+		var items []entities.ProjectExpenseItems
 		err = r.db.
 			WithContext(ctx).
 			Where("project_expense_id = ?", expenses[i].ID).

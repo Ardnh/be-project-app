@@ -21,15 +21,19 @@ func NewProjectExpensesItemRepository(db *gorm.DB, redis *redis.Client) reposito
 	}
 }
 
-func (r *ProjectExpensesItemRepository) Create(ctx context.Context, expenses *entities.ProjectExpenseItem) error {
-	return r.db.WithContext(ctx).Create(expenses).Error
+func (r *ProjectExpensesItemRepository) Create(ctx context.Context, expenses *entities.ProjectExpenseItems) error {
+	return r.db.
+		WithContext(ctx).
+		Model(&entities.ProjectExpenseItems{}).
+		Create(&expenses).
+		Error
 }
 
-func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *entities.ProjectExpenseItem) error {
+func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *entities.ProjectExpenseItems) error {
 
 	result := r.db.
 		WithContext(ctx).
-		Model(&entities.ProjectExpenseItem{}).
+		Model(&entities.ProjectExpenseItems{}).
 		Where("id = ?", expenses.ID).
 		Updates(expenses)
 
@@ -45,5 +49,5 @@ func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *en
 }
 
 func (r *ProjectExpensesItemRepository) Delete(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.ProjectExpenseItem{}).Error
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.ProjectExpenseItems{}).Error
 }

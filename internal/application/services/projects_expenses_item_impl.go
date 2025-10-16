@@ -22,11 +22,11 @@ func NewProjectExpensesItemService(repo repositories.ProjectExpensesItemReposito
 
 func (r *projectExpensesItemService) CreateProjectsExpensesItem(ctx context.Context, expensesItem *dto.CreateProjectExpensesItemDto) error {
 
-	req := entities.ProjectExpenseItem{
-		ProjectExpensesID: expensesItem.ProjectExpensesId,
-		Name:              expensesItem.Name,
-		Amount:            expensesItem.Amount,
-		CategoryName:      expensesItem.CategoryName,
+	req := entities.ProjectExpenseItems{
+		ProjectExpenseID: expensesItem.ProjectExpensesId,
+		Name:             expensesItem.Name,
+		Amount:           expensesItem.Amount,
+		CategoryName:     expensesItem.CategoryName,
 	}
 
 	err := r.repo.Create(ctx, &req)
@@ -40,13 +40,13 @@ func (r *projectExpensesItemService) CreateProjectsExpensesItem(ctx context.Cont
 
 func (r *projectExpensesItemService) UpdateProjectsExpensesItem(ctx context.Context, id string, expensesItem *dto.UpdateProjectExpensesItemDto) error {
 
-	req := entities.ProjectExpenseItem{
-		ID:                id,
-		ProjectExpensesID: expensesItem.ProjectExpensesId,
-		Name:              expensesItem.Name,
-		Amount:            expensesItem.Amount,
-		CategoryName:      expensesItem.CategoryName,
-		UpdatedAt:         time.Now(),
+	req := entities.ProjectExpenseItems{
+		ID:               id,
+		ProjectExpenseID: expensesItem.ProjectExpensesId,
+		Name:             expensesItem.Name,
+		Amount:           expensesItem.Amount,
+		CategoryName:     expensesItem.CategoryName,
+		UpdatedAt:        time.Now(),
 	}
 
 	err := r.repo.Update(ctx, &req)

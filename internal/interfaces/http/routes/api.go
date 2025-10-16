@@ -62,9 +62,9 @@ func SetupAPIRoutes(
 		// Project Expenses Item
 		projectExpensesItem := protected.Group("/project-expenses-item")
 		{
-			projectExpensesItem.Post("/", projectExpensesHandler.Create)
-			projectExpensesItem.Put("/:id", projectExpensesHandler.Update)
-			projectExpensesItem.Delete("/:id", projectExpensesHandler.Delete)
+			projectExpensesItem.Post("/", projectExpensesItemHandler.Create)
+			projectExpensesItem.Put("/:id", projectExpensesItemHandler.Update)
+			projectExpensesItem.Delete("/:id", projectExpensesItemHandler.Delete)
 		}
 	}
 
