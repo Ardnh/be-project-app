@@ -12,6 +12,7 @@ import (
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
 	"github.com/Ardnh/be-project-app/internal/domain/services"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthServiceImpl struct {
@@ -79,10 +80,16 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *dto.RegisterDto) er
 		return domain.ErrEmailAlreadyExists
 	}
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	userPassword := string(hashedPassword)
 	userEntities := &entities.User{
 		Username: req.Username,
 		Email:    req.Email,
-		Password: req.Password,
+		Password: userPassword,
 	}
 
 	errCreate := s.userRepo.Create(ctx, userEntities)
