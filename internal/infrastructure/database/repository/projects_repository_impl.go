@@ -171,8 +171,8 @@ func (r *projectsRepositoryImpl) FindAll(ctx context.Context, params entities.Ge
 	// Filter by category name jika categoryName tidak kosong
 	if params.Search != "" {
 		query = query.
-			Where("name=?", params.Search).
-			Where("category_name=?", params.Search)
+			Where("name LIKE %?%", params.Search).
+			Where("category_name LIKE %?%", params.Search)
 	}
 
 	// Apply sorting

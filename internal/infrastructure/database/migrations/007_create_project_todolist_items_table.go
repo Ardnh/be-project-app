@@ -14,7 +14,7 @@ func init() {
 					project_todolist_id UUID NOT NULL,
 					name VARCHAR(255) NOT NULL,
 					category_name VARCHAR(255) NOT NULL,
-					status VARCHAR(50) DEFAULT 'pending',
+					isCompleted BOOLEAN DEFAULT false,
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					deleted_at TIMESTAMP,
@@ -23,7 +23,6 @@ func init() {
 
 				CREATE INDEX idx_project_todolist_items_project_todolist_id ON project_todolist_items(project_todolist_id);
 				CREATE INDEX idx_project_todolist_items_deleted_at ON project_todolist_items(deleted_at);
-				CREATE INDEX idx_project_todolist_items_status ON project_todolist_items(status);
 			`).Error
 		},
 		Down: func(db *gorm.DB) error {

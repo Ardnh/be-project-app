@@ -15,12 +15,13 @@ func init() {
 					name VARCHAR(255) NOT NULL,
 					budget DECIMAL(15,2) DEFAULT 0,
 					category_name VARCHAR(255) NOT NULL,
+					start_date DATE,
+					end_date DATE,
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					deleted_at TIMESTAMP,
 					FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 				);
-
 				CREATE INDEX idx_projects_user_id ON projects(user_id);
 				CREATE INDEX idx_projects_deleted_at ON projects(deleted_at);
 			`).Error

@@ -13,20 +13,22 @@ import "time"
 //		DeletedAt    *time.Time `json:"deleted_at,omitempty" gorm:"index:idx_projects_deleted_at"`
 //	}
 type Projects struct {
-	ID           string  `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID       string  `gorm:"index" json:"user_id"`
-	Name         string  `gorm:"size:200" json:"name"`
-	Budget       float64 `json:"budget"`
-	CategoryName string  `gorm:"size:200" json:"category_name"`
+	ID           string    `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	UserID       string    `gorm:"index"`
+	Name         string    `gorm:"size:200"`
+	Budget       float64   `gorm:"float"`
+	CategoryName string    `gorm:"size:200"`
+	StartDate    time.Time `gorm:"date"`
+	EndDate      time.Time `gorm:"date"`
 
 	// Relasi
-	User            *User             `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	ProjectExpenses []ProjectExpenses `gorm:"foreignKey:ProjectID" json:"project_expenses,omitempty"`
-	// ProjectTodolists []ProjectTodolists `gorm:"foreignKey:ProjectID" json:"project_todolists,omitempty"`
+	User             *User              `gorm:"foreignKey:UserID"`
+	ProjectExpenses  []ProjectExpenses  `gorm:"foreignKey:ProjectID"`
+	ProjectTodolists []ProjectTodolists `gorm:"foreignKey:ProjectID"`
 
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt *time.Time `gorm:"index"`
 }
 
 type GetProjectsParams struct {
