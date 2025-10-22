@@ -41,6 +41,8 @@ func main() {
 	projectsRepository := repository.NewProjectsRepository(db, redisDb)
 	projectsExpensesRepository := repository.NewProjectsExpensesRepository(db, redisDb)
 	projectsExpensesItemRepository := repository.NewProjectExpensesItemRepository(db, redisDb)
+	projectsTodolistRepository := repository.NewProjectTodolistRepository(db, redisDb)
+	projectsTodolistItemRepository := repository.NewProjectTodolistItemRepository(db, redisDb)
 
 	// Service | internal -> application -> service
 	authService := services.NewAuthService(userRepository)
@@ -48,6 +50,8 @@ func main() {
 	projectsService := services.NewProjectsService(projectsRepository)
 	projectsExpensesService := services.NewProjectExpensesService(projectsExpensesRepository)
 	projectsExpensesItemService := services.NewProjectExpensesItemService(projectsExpensesItemRepository)
+	projectsTodolistService := services.NewProjectTodolistService(projectsTodolistRepository)
+	projectsTodolistItemService := services.NewProjectTodolistItemService(projectsTodolistItemRepository)
 
 	// Handler | internal -> interfaces -> http -> handler
 	authHandler := handlers.NewAuthHandlers(authService, validator)
@@ -55,6 +59,8 @@ func main() {
 	projectsHandler := handlers.NewProjectsHandler(projectsService, validator)
 	projectsExpensesHandler := handlers.NewProjectsExpensesHandler(projectsExpensesService, validator)
 	projectsExpensesItemHandler := handlers.NewProjectsExpensesItemHandler(projectsExpensesItemService, validator)
+	projectTodolistHandler := handlers.NewProjectTodolistHandler(projectsTodolistService, validator)
+	projectTodolistItemHandler := handlers.NewProjectTodolistItemHandler(projectsTodolistItemService, validator)
 	healthHandler := handlers.NewHealthHandler()
 
 	// Setup Routes
@@ -64,6 +70,8 @@ func main() {
 		projectsHandler,
 		projectsExpensesHandler,
 		projectsExpensesItemHandler,
+		projectTodolistHandler,
+		projectTodolistItemHandler,
 		authHandler,
 	)
 	routes.SetupHealthRoutes(app, healthHandler)

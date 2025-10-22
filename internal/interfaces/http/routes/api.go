@@ -13,6 +13,8 @@ func SetupAPIRoutes(
 	projectHandler *handlers.ProjectsHandler,
 	projectExpensesHandler *handlers.ProjectsExpensesHandler,
 	projectExpensesItemHandler *handlers.ProjectsExpensesItemHandler,
+	projectTodolisthandler *handlers.ProjectTodolistHandler,
+	projectTodolistItemHandler *handlers.ProjectTodolistItemHandler,
 	authHandler *handlers.AuthHandlers,
 ) {
 	// API v1 group
