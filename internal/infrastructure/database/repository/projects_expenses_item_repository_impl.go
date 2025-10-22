@@ -35,7 +35,7 @@ func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *en
 		WithContext(ctx).
 		Model(&entities.ProjectExpenseItems{}).
 		Where("id = ?", expenses.ID).
-		Updates(expenses)
+		Updates(&expenses)
 
 	if result.Error != nil {
 		return result.Error
