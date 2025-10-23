@@ -13,7 +13,7 @@ func SetupAPIRoutes(
 	projectHandler *handlers.ProjectsHandler,
 	projectExpensesHandler *handlers.ProjectsExpensesHandler,
 	projectExpensesItemHandler *handlers.ProjectsExpensesItemHandler,
-	projectTodolisthandler *handlers.ProjectTodolistHandler,
+	projectTodolistHandler *handlers.ProjectTodolistHandler,
 	projectTodolistItemHandler *handlers.ProjectTodolistItemHandler,
 	authHandler *handlers.AuthHandlers,
 ) {
@@ -68,6 +68,22 @@ func SetupAPIRoutes(
 			projectExpensesItem.Post("/", projectExpensesItemHandler.Create)
 			projectExpensesItem.Put("/:id", projectExpensesItemHandler.Update)
 			projectExpensesItem.Delete("/:id", projectExpensesItemHandler.Delete)
+		}
+
+		// Project Expenses
+		projectsTodolist := protected.Group("/project-todolist")
+		{
+			projectsTodolist.Post("/", projectTodolistHandler.Create)
+			projectsTodolist.Put("/:id", projectTodolistHandler.Update)
+			projectsTodolist.Delete("/:id", projectTodolistHandler.Delete)
+		}
+
+		// Project Expenses Item
+		projectTodolistItem := protected.Group("/project-todolist-item")
+		{
+			projectTodolistItem.Post("/", projectTodolistItemHandler.Create)
+			projectTodolistItem.Put("/:id", projectTodolistItemHandler.Update)
+			projectTodolistItem.Delete("/:id", projectTodolistItemHandler.Delete)
 		}
 	}
 
