@@ -26,6 +26,7 @@ func SuccessResponse(c *fiber.Ctx, statusCode int, message string, data interfac
 
 // Error response
 func ErrorResponse(c *fiber.Ctx, statusCode int, message string, err interface{}) error {
+
 	return c.Status(statusCode).JSON(Response{
 		Success: false,
 		Message: message,
