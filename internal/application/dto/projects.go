@@ -18,11 +18,18 @@ type ProjectWithTodolistAndExpensesDto struct {
 	EndDate         string                 `json:"end_date"`
 	CategoryName    string                 `json:"category_name" validate:"required"`
 	ProjectExpenses []*ProjectsExpensesDto `json:"project_expenses" validate:"required"`
+	ProjectTodolist []*ProjectTodolistsDto `json:"project_todolists" validate:"required"`
 }
 
 type ProjectCategorySummaryDto struct {
 	CategoryName string `json:"category_name" validate:"required"`
 	Total        int    `json:"total" validate:"required"`
+}
+
+type ProjectSummaryDto struct {
+	TotalBudgetUsed   int `json:"total_budget_used" validate:"required"`
+	TotalProjects     int `json:"total_projects" validate:"required"`
+	TotalProjectsDone int `json:"total_projects_done" validate:"required"`
 }
 
 // ================ REQUEST DTO ====================

@@ -14,7 +14,7 @@ func init() {
 					project_todolist_id UUID NOT NULL,
 					name VARCHAR(255) NOT NULL,
 					category_name VARCHAR(255) NOT NULL,
-					isCompleted BOOLEAN DEFAULT false,
+					is_completed BOOLEAN DEFAULT false,
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 					deleted_at TIMESTAMP,

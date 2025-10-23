@@ -69,5 +69,5 @@ func (h *AuthHandlers) Register(c *fiber.Ctx) error {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusCreated, "Login successfully", nil)
+	return http.SuccessResponse(c, fiber.StatusCreated, "Register successfully", nil)
 }

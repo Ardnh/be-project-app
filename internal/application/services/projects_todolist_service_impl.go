@@ -2,10 +2,13 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Ardnh/be-project-app/internal/application/dto"
+	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
 	"github.com/Ardnh/be-project-app/internal/domain/services"
+	"github.com/google/uuid"
 )
 
 type projectTodolistService struct {
@@ -18,6 +21,63 @@ func NewProjectTodolistService(repo repositories.ProjectTodolistRepository) serv
 	}
 }
 
-func (r *projectTodolistService) CreateProjectsTodolist(ctx context.Context, todo *dto.CreateProjectTodolistsDto) error
-func (r *projectTodolistService) UpdateProjectsTodolist(ctx context.Context, id string, user *dto.UpdateProjectTodolistsDto) error
-func (r *projectTodolistService) DeleteProjectsTodolist(ctx context.Context, id string) error
+func (r *projectTodolistService) CreateProjectsTodolist(ctx context.Context, todo *dto.CreateProjectTodolistsDto) error {
+
+	projectId, err := uuid.Parse(todo.ProjectID)
+	if err != nil {
+		return errors.New("Invalid project id")
+	}
+
+	req := entities.ProjectTodolists{
+		ProjectID: projectId,
+		Name:      todo.Name,
+	}
+
+	errCreate := r.repo.CreateProjectTodolist(ctx, &req)
+	if errCreate != nil {
+		return errCreate
+	}
+
+	return nil
+}
+
+func (r *projectTodolistService) UpdateProjectsTodolist(ctx context.Context, id string, todo *dto.UpdateProjectTodolistsDto) error {
+
+	parseId, errParseId := uuid.Parse(id)
+	if errParseId != nil {
+		return errParseId
+	}
+
+	parseProjectId, errParseProjectId := uuid.Parse(todo.ProjectID)
+	if errParseProjectId != nil {
+		return errParseProjectId
+	}
+
+	req := entities.ProjectTodolists{
+		ID:        parseId,
+		ProjectID: parseProjectId,
+		Name:      todo.Name,
+	}
+
+	errUpdate := r.repo.UpdateProjectTodolist(ctx, &req)
+	if errUpdate != nil {
+		return errUpdate
+	}
+
+	return nil
+}
+
+func (r *projectTodolistService) DeleteProjectsTodolist(ctx context.Context, id string) error {
+
+	parseId, errParseId := uuid.Parse(id)
+	if errParseId != nil {
+		return errParseId
+	}
+
+	err := r.repo.DeleteProjectTodolist(ctx, parseId.String())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

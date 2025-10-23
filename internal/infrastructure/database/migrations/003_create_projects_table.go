@@ -15,6 +15,7 @@ func init() {
 					name VARCHAR(255) NOT NULL,
 					budget DECIMAL(15,2) DEFAULT 0,
 					category_name VARCHAR(255) NOT NULL,
+					is_completed BOOLEAN DEFAULT false,
 					start_date DATE,
 					end_date DATE,
 					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

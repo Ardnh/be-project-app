@@ -13,7 +13,6 @@ type ProjectTodolistsDto struct {
 
 // ================ REQUEST DTO ====================
 type CreateProjectTodolistsDto struct {
-	ID        string `json:"id" validate:"required"`
 	ProjectID string `json:"project_id" validate:"required"`
 	Name      string `json:"name" validate:"required"`
 }

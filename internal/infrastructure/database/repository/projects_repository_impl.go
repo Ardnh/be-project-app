@@ -61,6 +61,24 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	return projects, nil
 }
 
+func (r *projectsRepositoryImpl) FindProjectSummaryByUserIDAndProjectID(ctx context.Context, userId string) (*entities.Projects, error) {
+	var projects *entities.Projects
+
+	query := r.
+		db.
+		WithContext(ctx).
+		Model(entities.Projects{}).
+		Where("user_id = ?", userId)
+
+	err := query.First(&projects).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find projects by user: %w", err)
+	}
+
+	return projects, nil
+}
+
 func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Projects) error {
 	return r.db.WithContext(ctx).Create(project).Error
 }
@@ -139,6 +157,17 @@ func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context
 	}
 
 	// Query database
+	// Check is user exist
+	var user *entities.User
+	errUser := r.db.WithContext(ctx).Where("id = ?", userId).First(&user).Error
+	if errUser != nil {
+		return nil, fmt.Errorf("failed to find user: %w", errUser)
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
 	var categories []*entities.ProjectCategorySummary
 	err := r.db.WithContext(ctx).
 		Model(&entities.Projects{}).

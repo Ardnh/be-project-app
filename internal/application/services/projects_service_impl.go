@@ -40,6 +40,19 @@ func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string
 	return projectsDto, nil
 }
 
+func (r *projectsService) GetProjectsSummaryByUserID(ctx context.Context, userId string) (*dto.ProjectSummaryDto, error) {
+
+	projects, err := r.projectsRepo.FindProjectSummaryByUserIDAndProjectID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate total budget used
+	// Calculate total projects
+	// Calculate total projects done
+
+}
+
 func (r *projectsService) GetProjectsByID(ctx context.Context, id string) (*dto.ProjectWithTodolistAndExpensesDto, error) {
 
 	projectEntities, err := r.projectsRepo.FindByProjectId(ctx, id)
