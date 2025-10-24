@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/Ardnh/be-project-app/internal/application/dto"
 	"github.com/Ardnh/be-project-app/internal/application/mapper"
@@ -40,9 +41,9 @@ func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string
 	return projectsDto, nil
 }
 
-func (r *projectsService) GetProjectsSummaryByUserID(ctx context.Context, userId string) (*dto.ProjectSummaryDto, error) {
+func (r *projectsService) GetProjectsSummaryByUserID(ctx context.Context, userId string) (any, error) {
 
-	projects, err := r.projectsRepo.FindProjectSummaryByUserIDAndProjectID(ctx, userId)
+	projects, err := r.projectsRepo.FindProjectSummaryByUserID(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +52,7 @@ func (r *projectsService) GetProjectsSummaryByUserID(ctx context.Context, userId
 	// Calculate total projects
 	// Calculate total projects done
 
+	return projects, nil
 }
 
 func (r *projectsService) GetProjectsByID(ctx context.Context, id string) (*dto.ProjectWithTodolistAndExpensesDto, error) {
@@ -84,13 +86,24 @@ func (r *projectsService) GetAllProjects(ctx context.Context, params dto.GetProj
 	return projectsDto, nil
 }
 
-func (r *projectsService) CreateProjects(ctx context.Context, project *dto.CreateProjectsDto) error {
+func (r *projectsService) CreateProjects(ctx context.Context, project *dto.CreateProjectDto) error {
+
+	parseStartDate, errParseStartDate := time.Parse("2006-01-02", project.StartDate)
+	if errParseStartDate != nil {
+		return errParseStartDate
+	}
+	parseEndDate, errParseEndDate := time.Parse("2006-01-02", project.EndDate)
+	if errParseEndDate != nil {
+		return errParseEndDate
+	}
 
 	projectEntities := &entities.Projects{
 		UserID:       project.UserID,
 		Name:         project.Name,
 		Budget:       project.Budget,
 		CategoryName: project.CategoryName,
+		StartDate:    parseStartDate,
+		EndDate:      parseEndDate,
 	}
 
 	err := r.projectsRepo.Create(ctx, projectEntities)
@@ -101,7 +114,7 @@ func (r *projectsService) CreateProjects(ctx context.Context, project *dto.Creat
 	return nil
 }
 
-func (r *projectsService) UpdateProjects(ctx context.Context, id string, project *dto.UpdateProjectsDto) error {
+func (r *projectsService) UpdateProjects(ctx context.Context, id string, project *dto.UpdateProjectDto) error {
 
 	projectEntities := &entities.Projects{
 		ID:           id,

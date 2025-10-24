@@ -32,9 +32,14 @@ func ToProjectDTO(project *entities.Projects) *dto.ProjectsDto {
 func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.ProjectWithTodolistAndExpensesDto {
 	// Length 0, capacity 3
 	expenses := make([]*dto.ProjectsExpensesDto, 0, len(project.ProjectExpenses))
+	todolists := make([]*dto.ProjectTodolistsDto, 0, len(project.ProjectTodolists))
 
 	for _, expensesItem := range project.ProjectExpenses {
 		expenses = append(expenses, ToProjectExpensesDTO(&expensesItem))
+	}
+
+	for _, todolist := range project.ProjectTodolists {
+		todolists = append(todolists, ToProjectTodolistDTO(&todolist))
 	}
 
 	return &dto.ProjectWithTodolistAndExpensesDto{
@@ -44,21 +49,26 @@ func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.Projec
 		Budget:          project.Budget,
 		CategoryName:    project.CategoryName,
 		ProjectExpenses: expenses,
+		ProjectTodolist: todolists,
 	}
 }
 
 func ToProjectExpensesDTO(expenses *entities.ProjectExpenses) *dto.ProjectsExpensesDto {
 
 	expensesItem := make([]*dto.ProjectExpensesItemDto, 0, len(expenses.ProjectExpenseItem))
+	var expensesUsed float64 = 0
 
 	for _, item := range expenses.ProjectExpenseItem {
-		expensesItem = append(expensesItem, ToProjectExpensesItemDTO(item))
+		itemDTO := ToProjectExpensesItemDTO(item)
+		expensesItem = append(expensesItem, itemDTO)
+		expensesUsed += itemDTO.Amount
 	}
 
 	return &dto.ProjectsExpensesDto{
 		ID:           expenses.ID,
 		ProjectID:    expenses.ProjectID,
 		Name:         expenses.Name,
+		ExpensesUsed: expensesUsed,
 		ExpensesItem: expensesItem,
 	}
 }
@@ -70,6 +80,32 @@ func ToProjectExpensesItemDTO(expensesItem entities.ProjectExpenseItems) *dto.Pr
 		Name:              expensesItem.Name,
 		Amount:            expensesItem.Amount,
 		CategoryName:      expensesItem.CategoryName,
+	}
+}
+
+func ToProjectTodolistDTO(todolist *entities.ProjectTodolists) *dto.ProjectTodolistsDto {
+
+	todolistItem := make([]*dto.ProjectTodolistItemsDto, 0, len(todolist.ProjectTodolistItems))
+
+	for _, item := range todolist.ProjectTodolistItems {
+		todolistItem = append(todolistItem, ToProjectTodolistItemDTO(item))
+	}
+
+	return &dto.ProjectTodolistsDto{
+		ID:                   todolist.ID,
+		ProjectID:            todolist.ProjectID,
+		Name:                 todolist.Name,
+		ProjectTodolistItems: todolistItem,
+	}
+}
+
+func ToProjectTodolistItemDTO(expensesItem entities.ProjectTodolistItems) *dto.ProjectTodolistItemsDto {
+	return &dto.ProjectTodolistItemsDto{
+		ID:                expensesItem.ID,
+		ProjectTodolistID: expensesItem.ProjectTodolistID,
+		Name:              expensesItem.Name,
+		CategoryName:      expensesItem.CategoryName,
+		IsCompleted:       expensesItem.IsCompleted,
 	}
 }
 

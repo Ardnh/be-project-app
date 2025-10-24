@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Ardnh/be-project-app/internal/application/dto"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
@@ -23,13 +22,8 @@ func NewProjectTodolistService(repo repositories.ProjectTodolistRepository) serv
 
 func (r *projectTodolistService) CreateProjectsTodolist(ctx context.Context, todo *dto.CreateProjectTodolistsDto) error {
 
-	projectId, err := uuid.Parse(todo.ProjectID)
-	if err != nil {
-		return errors.New("Invalid project id")
-	}
-
 	req := entities.ProjectTodolists{
-		ProjectID: projectId,
+		ProjectID: todo.ProjectID,
 		Name:      todo.Name,
 	}
 
@@ -43,19 +37,9 @@ func (r *projectTodolistService) CreateProjectsTodolist(ctx context.Context, tod
 
 func (r *projectTodolistService) UpdateProjectsTodolist(ctx context.Context, id string, todo *dto.UpdateProjectTodolistsDto) error {
 
-	parseId, errParseId := uuid.Parse(id)
-	if errParseId != nil {
-		return errParseId
-	}
-
-	parseProjectId, errParseProjectId := uuid.Parse(todo.ProjectID)
-	if errParseProjectId != nil {
-		return errParseProjectId
-	}
-
 	req := entities.ProjectTodolists{
-		ID:        parseId,
-		ProjectID: parseProjectId,
+		ID:        todo.ID,
+		ProjectID: todo.ProjectID,
 		Name:      todo.Name,
 	}
 

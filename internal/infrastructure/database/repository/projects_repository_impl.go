@@ -61,22 +61,20 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	return projects, nil
 }
 
-func (r *projectsRepositoryImpl) FindProjectSummaryByUserIDAndProjectID(ctx context.Context, userId string) (*entities.Projects, error) {
-	var projects *entities.Projects
+func (r *projectsRepositoryImpl) FindProjectSummaryByUserID(ctx context.Context, userId string) ([]entities.Projects, error) {
+	var projects []entities.Projects // ← Slice, bukan pointer
 
-	query := r.
-		db.
+	query := r.db.
 		WithContext(ctx).
-		Model(entities.Projects{}).
+		Model(&entities.Projects{}). // ← Pakai pointer di Model
 		Where("user_id = ?", userId)
 
-	err := query.First(&projects).Error
-
+	err := query.Find(&projects).Error // ← Pakai Find(), bukan First()
 	if err != nil {
 		return nil, fmt.Errorf("failed to find projects by user: %w", err)
 	}
 
-	return projects, nil
+	return projects, nil // ← Return slice langsung, bukan pointer
 }
 
 func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Projects) error {
@@ -88,7 +86,9 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 	var project entities.Projects
 	err := r.db.
 		WithContext(ctx).
+		Model(&entities.Projects{}).
 		Preload("ProjectExpenses").
+		Preload("ProjectTodolists").
 		Where("id = ?", projectId).
 		Where("deleted_at IS NULL").
 		First(&project).Error
@@ -130,6 +130,39 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 		}
 
 		expenses[i].ProjectExpenseItem = items
+	}
+
+	// Step 4: Get project todolist
+	var todolists []entities.ProjectTodolists
+	err = r.db.
+		WithContext(ctx).
+		Model(&entities.ProjectTodolists{}).
+		Where("project_id = ?", projectId).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Find(&todolists).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load expenses: %w", err)
+	}
+
+	project.ProjectTodolists = todolists
+	// Step 5: Load items untuk setiap todolist
+	for i := range todolists {
+		var items []entities.ProjectTodolistItems
+		err = r.db.
+			WithContext(ctx).
+			Model(&entities.ProjectTodolistItems{}).
+			Where("project_todolist_id = ?", todolists[i].ID).
+			Where("deleted_at IS NULL").
+			Order("created_at DESC").
+			Find(&items).Error
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to load todolist items: %w", err)
+		}
+
+		todolists[i].ProjectTodolistItems = items
 	}
 
 	return &project, nil

@@ -44,10 +44,11 @@ func SetupAPIRoutes(
 		// Project routes (contoh)
 		projects := protected.Group("/projects")
 		{
-			projects.Get("/:user_id", projectHandler.GetProjectsByUserId)
 			projects.Get("/by-id/:id", projectHandler.GetProjectById)
-			projects.Get("/category/:user_id", projectHandler.GetProjectCategoryByUserId)
-			projects.Get("/summary/:user_id", projectHandler.GetAllProjectSummaryByUserId)
+			projects.Get("/user/:user_id", projectHandler.GetProjectsByUserId)                  // ← ubah jadi /user/:user_id
+			projects.Get("/user/:user_id/category", projectHandler.GetProjectCategoryByUserId)  // ← konsisten
+			projects.Get("/user/:user_id/summary", projectHandler.GetAllProjectSummaryByUserId) // ← konsisten
+
 			projects.Post("/", projectHandler.CreateProject)
 			projects.Put("/:id", projectHandler.UpdateProject)
 			projects.Delete("/:id", projectHandler.DeleteProject)

@@ -11,6 +11,7 @@ import (
 	validation_utils "github.com/Ardnh/be-project-app/internal/utils/validator"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -28,7 +29,7 @@ func NewProjectsHandler(projectsService services.ProjectsService, validator *val
 }
 
 func (h *ProjectsHandler) CreateProject(c *fiber.Ctx) error {
-	var req dto.CreateProjectsDto
+	var req dto.CreateProjectDto
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -47,7 +48,7 @@ func (h *ProjectsHandler) CreateProject(c *fiber.Ctx) error {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusCreated, "User created", nil)
+	return http.SuccessResponse(c, fiber.StatusCreated, "Success create project", nil)
 }
 
 func (h *ProjectsHandler) GetProjectsByUserId(c *fiber.Ctx) error {
@@ -135,18 +136,22 @@ func (h *ProjectsHandler) GetProjectById(c *fiber.Ctx) error {
 func (h *ProjectsHandler) GetAllProjectSummaryByUserId(c *fiber.Ctx) error {
 
 	// 1. Get user_id dari URL params
-	userId := c.Params("user_id")
+	userId := c.Params("user_id", "")
 	if userId == "" {
 		return http.ErrorResponse(c, fiber.StatusBadRequest, "User ID is required", nil)
 	}
 
-	result := map[string]any{
-		"total_projects":      12,
-		"total_projects_done": 1,
-		"total_budget_used":   120000000,
+	parsedUserId, err := uuid.Parse(userId)
+	if err != nil {
+		return http.ErrorResponse(c, fiber.StatusBadRequest, "Invalid user id", nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusOK, "Hello get all summary", result)
+	summary, err := h.projectsService.GetProjectsSummaryByUserID(c.Context(), (parsedUserId).String())
+	if err != nil {
+		return http.ErrorResponse(c, fiber.StatusBadRequest, "Failed to get summary", err)
+	}
+
+	return http.SuccessResponse(c, fiber.StatusOK, "Successfully get summary", summary)
 }
 
 func (h *ProjectsHandler) UpdateProject(c *fiber.Ctx) error {
@@ -156,7 +161,7 @@ func (h *ProjectsHandler) UpdateProject(c *fiber.Ctx) error {
 		return http.ErrorResponse(c, fiber.ErrBadRequest.Code, "ID not provided", nil)
 	}
 
-	var req dto.UpdateProjectsDto
+	var req dto.UpdateProjectDto
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
