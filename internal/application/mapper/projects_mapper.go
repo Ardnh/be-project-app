@@ -149,3 +149,12 @@ func ToProjectCategorySummaryDTO(projectCategory []*entities.ProjectCategorySumm
 
 	return result
 }
+
+func ToProjectSummaryDTO(summary *entities.ProjectUserSummary) *dto.ProjectSummaryDto {
+
+	return &dto.ProjectSummaryDto{
+		TotalProjects:          summary.TotalProject,
+		TotalBudgetUsed:        summary.TotalBudget,
+		TotalCompletedProjects: summary.TotalCompletedProject,
+	}
+}

@@ -30,9 +30,9 @@ type ProjectCategorySummaryDto struct {
 }
 
 type ProjectSummaryDto struct {
-	TotalBudgetUsed   int `json:"total_budget_used" validate:"required"`
-	TotalProjects     int `json:"total_projects" validate:"required"`
-	TotalProjectsDone int `json:"total_projects_done" validate:"required"`
+	TotalBudgetUsed        float64 `json:"total_budget_used" validate:"required"`
+	TotalProjects          int     `json:"total_projects" validate:"required"`
+	TotalCompletedProjects int     `json:"total_projects_done" validate:"required"`
 }
 
 // ================ REQUEST DTO ====================
@@ -51,7 +51,13 @@ type UpdateProjectDto struct {
 	Budget       float64 `json:"budget" validate:"required"`
 	StartDate    string  `json:"start_date"`
 	EndDate      string  `json:"end_date"`
-	CategoryName string  `json:"category_name" validate:"required"`
+	CategoryName string  `json:"category_name"`
+}
+
+type ProjectUserSummaryDto struct {
+	TotalBudget           float64 `json:"total_budget"`
+	TotalProject          int     `json:"total_project"`
+	TotalCompletedProject int     `json:"total_completed_project"`
 }
 
 // ================ RESPONSE DTO ====================

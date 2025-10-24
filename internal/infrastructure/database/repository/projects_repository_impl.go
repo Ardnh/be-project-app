@@ -32,12 +32,11 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	var projects []*entities.Projects
 	// var projectWithTodolistAndExpenses *entities.ProjectWithTodolistAndExpenses
 
-	fmt.Println(params.Search)
-
-	query := r.
-		db.
+	query := r.db.
 		WithContext(ctx).
-		Table("projects").
+		Model(&entities.Projects{}).
+		Preload("ProjectExpenses").
+		Preload("ProjectTodolists").
 		Where("user_id = ?", userId)
 
 	if params.Search != "" {
@@ -61,20 +60,23 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	return projects, nil
 }
 
-func (r *projectsRepositoryImpl) FindProjectSummaryByUserID(ctx context.Context, userId string) ([]entities.Projects, error) {
-	var projects []entities.Projects // ← Slice, bukan pointer
+func (r *projectsRepositoryImpl) FindProjectSummaryByUserID(ctx context.Context, userId string) (*entities.ProjectUserSummary, error) {
+	var projects entities.ProjectUserSummary
 
-	query := r.db.
-		WithContext(ctx).
-		Model(&entities.Projects{}). // ← Pakai pointer di Model
-		Where("user_id = ?", userId)
-
-	err := query.Find(&projects).Error // ← Pakai Find(), bukan First()
+	// err := query.Find(&projects).Error
+	err := r.db.Model(&entities.Projects{}).
+		Select(
+			"COALESCE(SUM(budget), 0) as total_budget",
+			"COUNT(id) as total_project",
+			"COUNT(CASE WHEN is_completed = true THEN 1 END) as total_completed_project",
+		).
+		Where("user_id = ?", userId).
+		Scan(&projects).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to find projects by user: %w", err)
 	}
 
-	return projects, nil // ← Return slice langsung, bukan pointer
+	return &projects, nil // ← Return slice langsung, bukan pointer
 }
 
 func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Projects) error {

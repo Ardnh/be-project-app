@@ -55,3 +55,9 @@ type ProjectCategorySummary struct {
 	CategoryName string
 	Total        int
 }
+
+type ProjectUserSummary struct {
+	TotalBudget           float64
+	TotalProject          int
+	TotalCompletedProject int
+}
