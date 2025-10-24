@@ -34,22 +34,38 @@ func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.Projec
 	expenses := make([]*dto.ProjectsExpensesDto, 0, len(project.ProjectExpenses))
 	todolists := make([]*dto.ProjectTodolistsDto, 0, len(project.ProjectTodolists))
 
+	var usedBudget float64 = 0
+	var totalTodolistItem int = 0
+	var totalTodolistCompletedItem int = 0
+
 	for _, expensesItem := range project.ProjectExpenses {
-		expenses = append(expenses, ToProjectExpensesDTO(&expensesItem))
+		item := ToProjectExpensesDTO(&expensesItem)
+		expenses = append(expenses, item)
+
+		usedBudget += item.ExpensesUsed
 	}
 
 	for _, todolist := range project.ProjectTodolists {
+		todo := ToProjectTodolistDTO(&todolist)
 		todolists = append(todolists, ToProjectTodolistDTO(&todolist))
+
+		totalTodolistItem += todo.TotalTodo
+		totalTodolistCompletedItem += todo.TotalCompletedTodo
 	}
 
 	return &dto.ProjectWithTodolistAndExpensesDto{
-		ID:              project.ID,
-		UserID:          project.UserID,
-		Name:            project.Name,
-		Budget:          project.Budget,
-		CategoryName:    project.CategoryName,
-		ProjectExpenses: expenses,
-		ProjectTodolist: todolists,
+		ID:                         project.ID,
+		UserID:                     project.UserID,
+		Name:                       project.Name,
+		Budget:                     project.Budget,
+		StartDate:                  project.StartDate,
+		EndDate:                    project.EndDate,
+		BudgetUsed:                 usedBudget,
+		CategoryName:               project.CategoryName,
+		TotalTodolistItem:          totalTodolistItem,
+		TotalTodolistCompletedItem: totalTodolistCompletedItem,
+		ProjectExpenses:            expenses,
+		ProjectTodolist:            todolists,
 	}
 }
 
@@ -87,14 +103,26 @@ func ToProjectTodolistDTO(todolist *entities.ProjectTodolists) *dto.ProjectTodol
 
 	todolistItem := make([]*dto.ProjectTodolistItemsDto, 0, len(todolist.ProjectTodolistItems))
 
-	for _, item := range todolist.ProjectTodolistItems {
-		todolistItem = append(todolistItem, ToProjectTodolistItemDTO(item))
+	for _, todoItem := range todolist.ProjectTodolistItems {
+		var item = ToProjectTodolistItemDTO(todoItem)
+		todolistItem = append(todolistItem, item)
+	}
+
+	totalTodo := len(todolist.ProjectTodolistItems)
+	totalCompletedTodo := 0
+
+	for _, todoItem := range todolist.ProjectTodolistItems {
+		if todoItem.IsCompleted {
+			totalCompletedTodo += 1
+		}
 	}
 
 	return &dto.ProjectTodolistsDto{
 		ID:                   todolist.ID,
 		ProjectID:            todolist.ProjectID,
 		Name:                 todolist.Name,
+		TotalTodo:            totalTodo,
+		TotalCompletedTodo:   totalCompletedTodo,
 		ProjectTodolistItems: todolistItem,
 	}
 }

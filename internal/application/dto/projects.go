@@ -10,15 +10,18 @@ type ProjectsDto struct {
 }
 
 type ProjectWithTodolistAndExpensesDto struct {
-	ID              string                 `json:"id" validate:"required"`
-	UserID          string                 `json:"user_id" validate:"required"`
-	Name            string                 `json:"name" validate:"required"`
-	Budget          float64                `json:"budget" validate:"required"`
-	StartDate       string                 `json:"start_date" validate:"omitempty"`
-	EndDate         string                 `json:"end_date" validate:"omitempty"`
-	CategoryName    string                 `json:"category_name" validate:"required"`
-	ProjectExpenses []*ProjectsExpensesDto `json:"project_expenses" validate:"required"`
-	ProjectTodolist []*ProjectTodolistsDto `json:"project_todolists" validate:"required"`
+	ID                         string                 `json:"id" validate:"required"`
+	UserID                     string                 `json:"user_id" validate:"required"`
+	Name                       string                 `json:"name" validate:"required"`
+	Budget                     float64                `json:"budget" validate:"required"`
+	StartDate                  string                 `json:"start_date" validate:"omitempty"`
+	EndDate                    string                 `json:"end_date" validate:"omitempty"`
+	CategoryName               string                 `json:"category_name" validate:"required"`
+	BudgetUsed                 float64                `json:"budget_used" validate:"required"`
+	TotalTodolistItem          int                    `json:"total_todolist_item" validate:"required"`
+	TotalTodolistCompletedItem int                    `json:"total_todolist_completed_item" validate:"required"`
+	ProjectExpenses            []*ProjectsExpensesDto `json:"project_expenses" validate:"required"`
+	ProjectTodolist            []*ProjectTodolistsDto `json:"project_todolists" validate:"required"`
 }
 
 type ProjectCategorySummaryDto struct {
