@@ -7,7 +7,7 @@ import (
 )
 
 type ProjectsRepository interface {
-	FindByUserID(ctx context.Context, userId string, params entities.GetProjectsParams) ([]*entities.Projects, error)
+	FindByUserID(ctx context.Context, userId string, params entities.GetProjectsParams) ([]*entities.ProjectsByUserId, error)
 	FindProjectCategoryByUserID(ctx context.Context, userId string) ([]*entities.ProjectCategorySummary, error)
 	FindProjectSummaryByUserID(ctx context.Context, userId string) (*entities.ProjectUserSummary, error)
 	FindAll(ctx context.Context, params entities.GetProjectsParams) ([]*entities.Projects, error)

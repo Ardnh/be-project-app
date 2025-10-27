@@ -8,6 +8,7 @@ type ProjectTodolistsDto struct {
 	ProjectTodolistItems []*ProjectTodolistItemsDto `json:"todolist_items"`
 	TotalTodo            int                        `json:"total_todo"`
 	TotalCompletedTodo   int                        `json:"total_completed_todo"`
+	IsTodolistCompleted  bool                       `json:"is_todolist_completed"`
 	CreatedAt            string                     `json:"created_at"`
 	UpdatedAt            string                     `json:"updated_at"`
 	DeletedAt            *string                    `json:"deleted_at"`

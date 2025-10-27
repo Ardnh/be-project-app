@@ -2,11 +2,13 @@ package dto
 
 // ================ DTO ====================
 type ProjectsDto struct {
-	ID           string  `json:"id" validate:"required"`
-	UserID       string  `json:"user_id" validate:"required"`
-	Name         string  `json:"name" validate:"required"`
-	Budget       float64 `json:"budget" validate:"required"`
-	CategoryName string  `json:"category_name" validate:"required"`
+	ID                string  `json:"id" validate:"required"`
+	UserID            string  `json:"user_id" validate:"required"`
+	Name              string  `json:"name" validate:"required"`
+	Budget            float64 `json:"budget" validate:"required"`
+	CategoryName      string  `json:"category_name" validate:"required"`
+	TotalTodolist     int     `json:"total_todolist" validate:"required"`
+	TotalTodolistDone int     `json:"total_todolist_done" validate:"required"`
 }
 
 type ProjectWithTodolistAndExpensesDto struct {
@@ -33,6 +35,23 @@ type ProjectSummaryDto struct {
 	TotalBudgetUsed        float64 `json:"total_budget_used" validate:"required"`
 	TotalProjects          int     `json:"total_projects" validate:"required"`
 	TotalCompletedProjects int     `json:"total_projects_done" validate:"required"`
+}
+
+type ProjectsByUserIdDto struct {
+	ProjectID             string  `json:"project_id"`
+	UserID                string  `json:"user_id"`
+	Name                  string  `json:"name"`
+	Budget                float64 `json:"budget"`
+	IsCompleted           bool    `json:"is_completed"`
+	CategoryName          string  `json:"category_name"`
+	StartDate             string  `json:"start_date"` // format: "2006-01-02" atau "2006-01-02T15:04:05Z"
+	EndDate               string  `json:"end_date"`   // format: "2006-01-02" atau "2006-01-02T15:04:05Z"
+	TotalTodolist         int     `json:"total_todolist"`
+	TotalTodolistItemDone int     `json:"total_todolist_item_done"`
+	TotalTodolistItem     int     `json:"total_todolist_item"`
+	DaysRemaining         int     `json:"days_remaining"`
+	DaysRemainingStatus   string  `json:"days_remaining_status"`
+	CompletionPercetage   float32 `json:"completion_percentage"`
 }
 
 // ================ REQUEST DTO ====================

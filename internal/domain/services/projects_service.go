@@ -7,7 +7,7 @@ import (
 )
 
 type ProjectsService interface {
-	GetProjectsByUserID(ctx context.Context, userId string, params dto.GetProjectsParams) ([]*dto.ProjectsDto, error)
+	GetProjectsByUserID(ctx context.Context, userId string, params dto.GetProjectsParams) ([]*dto.ProjectsByUserIdDto, error)
 	GetProjectsSummaryByUserID(ctx context.Context, userId string) (*dto.ProjectSummaryDto, error)
 	GetProjectsByID(ctx context.Context, id string) (*dto.ProjectWithTodolistAndExpensesDto, error)
 	GetProjectCategoryByUserId(ctx context.Context, userId string) ([]*dto.ProjectCategorySummaryDto, error)

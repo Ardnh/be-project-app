@@ -20,7 +20,7 @@ func NewProjectsService(repo repositories.ProjectsRepository) services.ProjectsS
 	}
 }
 
-func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string, params dto.GetProjectsParams) ([]*dto.ProjectsDto, error) {
+func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string, params dto.GetProjectsParams) ([]*dto.ProjectsByUserIdDto, error) {
 
 	paramsEntities := entities.GetProjectsParams{
 		Search:    params.Search,
@@ -35,7 +35,7 @@ func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string
 		return nil, err
 	}
 
-	projectsDto := mapper.ToProjectsDTO(projects)
+	projectsDto := mapper.ToProjectsByUserDTO(projects)
 
 	return projectsDto, nil
 }

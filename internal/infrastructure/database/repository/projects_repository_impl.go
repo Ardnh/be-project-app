@@ -28,31 +28,75 @@ func NewProjectsRepository(db *gorm.DB, redis *redis.Client) repositories.Projec
 	}
 }
 
-func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string, params entities.GetProjectsParams) ([]*entities.Projects, error) {
-	var projects []*entities.Projects
-	// var projectWithTodolistAndExpenses *entities.ProjectWithTodolistAndExpenses
+func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string, params entities.GetProjectsParams) ([]*entities.ProjectsByUserId, error) {
+	var projects []*entities.ProjectsByUserId
 
-	query := r.db.
-		WithContext(ctx).
-		Model(&entities.Projects{}).
-		Preload("ProjectExpenses").
-		Preload("ProjectTodolists").
-		Where("user_id = ?", userId)
+	// Base query dengan agregasi
+	query := r.db.WithContext(ctx).
+		Table("projects p").
+		Select(`
+            p.id as project_id,
+            p.user_id,
+            p.name,
+            p.budget,
+            p.is_completed,
+            p.category_name,
+            p.start_date,
+            p.end_date,
+            p.created_at,
+            COUNT(DISTINCT pt.id) as total_todolist,
+            COUNT(CASE WHEN pti.is_completed THEN 1 END) as total_todolist_item_done,
+            COUNT(pti.id) as total_todolist_item,
+            COUNT(DISTINCT pe.id) as total_expenses,
+            CASE
+				WHEN count(pti.id) = 0 then 0
+				ELSE
+					COUNT(case when pti.is_completed = true then 1 end)::float / COUNT(pti.id)
+			END as completion_percentage
+        `).
+		Joins("LEFT JOIN project_todolists pt ON p.id = pt.project_id").
+		Joins("LEFT JOIN project_todolist_items pti ON pt.id = pti.project_todolist_id").
+		Joins("LEFT JOIN project_expenses pe ON p.id = pe.project_id").
+		Where("p.user_id = ?", userId).
+		Group(`
+            p.id,
+            p.user_id,
+            p.name,
+            p.budget,
+            p.is_completed,
+            p.category_name,
+            p.start_date,
+            p.end_date,
+            p.created_at
+        `)
 
+	// Search filter
 	if params.Search != "" {
-		searchPattern := "%" + params.Search + "%" // Tambahkan wildcard
-		query = query.Where("name LIKE ? OR category_name LIKE ?", searchPattern, searchPattern)
+		searchPattern := "%" + params.Search + "%"
+		query = query.Where("p.name LIKE ? OR p.category_name LIKE ?", searchPattern, searchPattern)
 	}
 
-	// Apply sorting
-	orderClause := fmt.Sprintf("%s %s", params.SortBy, params.SortOrder)
+	// Sorting
+	if params.SortBy != "" && params.SortOrder != "" {
+		// Map field names untuk sorting
+		sortField := params.SortBy
+		if sortField == "name" || sortField == "category_name" || sortField == "created_at" {
+			sortField = "p." + sortField
+		}
+		orderClause := fmt.Sprintf("%s %s", sortField, params.SortOrder)
+		query = query.Order(orderClause)
+	}
 
-	err := query.
-		Order(orderClause).
-		Limit(params.Limit).
-		Offset(params.Offset).
-		Find(&projects).Error
+	// Pagination
+	if params.Limit > 0 {
+		query = query.Limit(params.Limit)
+	}
+	if params.Offset > 0 {
+		query = query.Offset(params.Offset)
+	}
 
+	// Execute query
+	err := query.Scan(&projects).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to find projects by user: %w", err)
 	}
@@ -206,7 +250,7 @@ func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context
 	var categories []*entities.ProjectCategorySummary
 	err := r.db.WithContext(ctx).
 		Model(&entities.Projects{}).
-		Select("DISTINCT category_name, COUNT(*) as total").
+		Select("category_name, COUNT(*) as total").
 		Where("user_id = ?", userId).
 		Where("category_name IS NOT NULL AND category_name != ''").
 		Order("category_name ASC").

@@ -6,7 +6,10 @@ import (
 )
 
 func ToUserDTO(user *entities.User) *dto.UserDto {
+
+	idString := (user.ID).String()
 	return &dto.UserDto{
+		ID:       idString,
 		Username: user.Username,
 		Email:    user.Email,
 	}

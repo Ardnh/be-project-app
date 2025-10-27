@@ -3,6 +3,7 @@ package mapper
 import (
 	"github.com/Ardnh/be-project-app/internal/application/dto"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
+	date_utils "github.com/Ardnh/be-project-app/internal/utils/date"
 )
 
 func ToProjectsDTO(projects []*entities.Projects) []*dto.ProjectsDto {
@@ -21,12 +22,47 @@ func ToProjectDTO(project *entities.Projects) *dto.ProjectsDto {
 	}
 
 	return &dto.ProjectsDto{
-		ID:           project.ID,
-		UserID:       project.UserID,
-		Name:         project.Name,
-		Budget:       project.Budget,
-		CategoryName: project.CategoryName,
+		ID:                project.ID,
+		UserID:            project.UserID,
+		Name:              project.Name,
+		Budget:            project.Budget,
+		CategoryName:      project.CategoryName,
+		TotalTodolist:     0,
+		TotalTodolistDone: 0,
 	}
+}
+
+func ToProjectsByUserDTO(entities []*entities.ProjectsByUserId) []*dto.ProjectsByUserIdDto {
+	if entities == nil {
+		return []*dto.ProjectsByUserIdDto{} // return empty slice, bukan nil
+	}
+
+	dtos := make([]*dto.ProjectsByUserIdDto, len(entities))
+
+	for i, entity := range entities {
+		if entity == nil {
+			continue
+		}
+
+		daysRemaining := date_utils.CalculateDaysRemaining(entity.EndDate)
+		dtos[i] = &dto.ProjectsByUserIdDto{
+			ProjectID:             entity.ProjectID,
+			UserID:                entity.UserID,
+			Name:                  entity.Name,
+			Budget:                entity.Budget,
+			IsCompleted:           entity.IsCompleted,
+			CategoryName:          entity.CategoryName,
+			StartDate:             entity.StartDate,
+			EndDate:               entity.EndDate,
+			TotalTodolist:         entity.TotalTodolist,
+			TotalTodolistItemDone: entity.TotalTodolistItemDone,
+			TotalTodolistItem:     entity.TotalTodolistItem,
+			DaysRemaining:         daysRemaining,
+			CompletionPercetage:   entity.CompletionPercentage,
+		}
+	}
+
+	return dtos
 }
 
 func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.ProjectWithTodolistAndExpensesDto {
@@ -117,6 +153,8 @@ func ToProjectTodolistDTO(todolist *entities.ProjectTodolists) *dto.ProjectTodol
 		}
 	}
 
+	todoIsAvailable := totalTodo > 0
+	isTodolistComplete := todoIsAvailable && (totalTodo == totalCompletedTodo)
 	return &dto.ProjectTodolistsDto{
 		ID:                   todolist.ID,
 		ProjectID:            todolist.ProjectID,
@@ -124,6 +162,7 @@ func ToProjectTodolistDTO(todolist *entities.ProjectTodolists) *dto.ProjectTodol
 		TotalTodo:            totalTodo,
 		TotalCompletedTodo:   totalCompletedTodo,
 		ProjectTodolistItems: todolistItem,
+		IsTodolistCompleted:  isTodolistComplete,
 	}
 }
 

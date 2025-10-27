@@ -31,6 +31,21 @@ type Projects struct {
 	DeletedAt *time.Time `gorm:"index"`
 }
 
+type ProjectsByUserId struct {
+	ProjectID             string  `gorm:"column:project_id"`
+	UserID                string  `gorm:"column:user_id"`
+	Name                  string  `gorm:"column:name"`
+	Budget                float64 `gorm:"column:budget"`
+	IsCompleted           bool    `gorm:"column:is_completed"`
+	CategoryName          string  `gorm:"column:category_name"`
+	StartDate             string  `gorm:"column:start_date"`
+	EndDate               string  `gorm:"column:end_date"`
+	TotalTodolist         int     `gorm:"column:total_todolist"`
+	TotalTodolistItemDone int     `gorm:"column:total_todolist_item_done"`
+	TotalTodolistItem     int     `gorm:"column:total_todolist_item"`
+	CompletionPercentage  float32 `gorm:"completion_percentage"`
+}
+
 type GetProjectsParams struct {
 	Search    string
 	Limit     int
