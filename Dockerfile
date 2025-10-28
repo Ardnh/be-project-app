@@ -17,7 +17,8 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/migrate ./cmd/migrate/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/main ./cmd/server/main.go
 
 # Final stage
 FROM alpine:3.22.2
@@ -33,4 +34,4 @@ COPY --from=builder /app/main .
 EXPOSE 8080
 
 # Run the application
-CMD ["./main"]
+CMD ["sh", "-c", "./bin/migrate/migrate && ./bin/main/main"]
