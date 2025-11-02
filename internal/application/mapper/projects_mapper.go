@@ -89,13 +89,24 @@ func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.Projec
 		totalTodolistCompletedItem += todo.TotalCompletedTodo
 	}
 
+	// Format tanggal dengan aman
+	var startDate, endDate string
+
+	if project.StartDate != nil {
+		startDate = project.StartDate.Format("2006-01-02")
+	}
+
+	if project.EndDate != nil {
+		endDate = project.EndDate.Format("2006-01-02")
+	}
+
 	return &dto.ProjectWithTodolistAndExpensesDto{
 		ID:                         project.ID,
 		UserID:                     project.UserID,
 		Name:                       project.Name,
 		Budget:                     project.Budget,
-		StartDate:                  project.StartDate,
-		EndDate:                    project.EndDate,
+		StartDate:                  startDate,
+		EndDate:                    endDate,
 		BudgetUsed:                 usedBudget,
 		CategoryName:               project.CategoryName,
 		TotalTodolistItem:          totalTodolistItem,

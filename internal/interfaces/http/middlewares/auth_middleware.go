@@ -2,32 +2,62 @@
 package middlewares
 
 import (
-	"github.com/Ardnh/be-project-app/internal/application/dto"
+	"strings"
+	"time"
+
+	"github.com/Ardnh/be-project-app/internal/config"
+	http "github.com/Ardnh/be-project-app/internal/interfaces/http/responses"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware validates JWT token
+// AuthMiddleware validates JWT token and attaches user info to context
 func AuthMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Get token from header
-		token := c.Get("Authorization")
-
-		if token == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(
-				dto.Error("Unauthorized: No token provided"),
-			)
+		authHeader := c.Get("Authorization")
+		if authHeader == "" {
+			return http.ErrorResponse(c, fiber.StatusUnauthorized, "Unauthorized: No token provided", nil)
 		}
 
-		// TODO: Validate JWT token
-		// user, err := jwt.ValidateToken(token)
-		// if err != nil {
-		//     return c.Status(fiber.StatusUnauthorized).JSON(...)
-		// }
+		// Expect header format: "Bearer <token>"
+		tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer"))
+		if tokenString == "" {
+			return http.ErrorResponse(c, fiber.StatusUnauthorized, "Unauthorized: Invalid token format", nil)
+		}
 
-		// Store user in context
-		// c.Locals("user", user)
+		// Load JWT secret key from config
+		cfg := config.LoadConfig()
+		secretKey := []byte(cfg.App.JWTSecret)
+		if len(secretKey) == 0 {
+			return http.ErrorResponse(c, fiber.StatusInternalServerError, "JWT secret not configured", nil)
+		}
 
-		return c.Next()
+		// Parse and validate token
+		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
+			// Ensure token uses correct signing method
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid signing method")
+			}
+			return secretKey, nil
+		})
+
+		if err != nil {
+			return http.ErrorResponse(c, fiber.StatusUnauthorized, "Invalid or expired token", err.Error())
+		}
+
+		// Validate claims
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			// Optional: check expiry manually
+			if exp, ok := claims["exp"].(float64); ok && time.Now().Unix() > int64(exp) {
+				return http.ErrorResponse(c, fiber.StatusUnauthorized, "Token has expired", nil)
+			}
+
+			// Store user info in context
+			c.Locals("user", claims)
+			return c.Next()
+		}
+
+		return http.ErrorResponse(c, fiber.StatusUnauthorized, "Invalid token claims", nil)
 	}
 }
 

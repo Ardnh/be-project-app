@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/Ardnh/be-project-app/internal/application/dto"
 	"github.com/Ardnh/be-project-app/internal/application/mapper"
@@ -84,13 +85,30 @@ func (r *projectsService) GetAllProjects(ctx context.Context, params dto.GetProj
 
 func (r *projectsService) CreateProjects(ctx context.Context, project *dto.CreateProjectDto) error {
 
+	var startDate *time.Time
+	if project.StartDate != "" {
+		parsed, err := time.Parse("2006-01-02", project.StartDate)
+		if err == nil {
+			startDate = &parsed
+		}
+	}
+
+	var endDate *time.Time
+	if project.EndDate != "" {
+		parsed, err := time.Parse("2006-01-02", project.EndDate)
+		if err == nil {
+			endDate = &parsed
+		}
+	}
+
 	projectEntities := &entities.Projects{
 		UserID:       project.UserID,
 		Name:         project.Name,
 		Budget:       project.Budget,
 		CategoryName: project.CategoryName,
-		StartDate:    project.StartDate,
-		EndDate:      project.EndDate,
+		StartDate:    startDate,
+		EndDate:      endDate,
+		IsCompleted:  project.IsCompleted,
 	}
 
 	err := r.projectsRepo.Create(ctx, projectEntities)
@@ -109,6 +127,7 @@ func (r *projectsService) UpdateProjects(ctx context.Context, id string, project
 		Name:         project.Name,
 		Budget:       project.Budget,
 		CategoryName: project.CategoryName,
+		IsCompleted:  project.IsCompleted,
 	}
 
 	err := r.projectsRepo.Update(ctx, projectEntities)

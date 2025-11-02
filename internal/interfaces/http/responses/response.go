@@ -9,10 +9,10 @@ import (
 )
 
 type Response struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
+	Error   any    `json:"error,omitempty"`
 }
 
 // Success response
@@ -38,12 +38,12 @@ func ErrorResponse(c *fiber.Ctx, statusCode int, message string, err interface{}
 func HandleServiceError(c *fiber.Ctx, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrUserNotFound):
-		return ErrorResponse(c, http.StatusNotFound, "User not found", nil)
+		return ErrorResponse(c, http.StatusNotFound, domain.ErrInvalidCredentials.Error(), nil)
 	case errors.Is(err, domain.ErrEmailAlreadyExists):
-		return ErrorResponse(c, http.StatusConflict, "Email already exists", nil)
+		return ErrorResponse(c, http.StatusConflict, domain.ErrEmailAlreadyExists.Error(), nil)
 	case errors.Is(err, domain.ErrUnauthorized):
-		return ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		return ErrorResponse(c, http.StatusUnauthorized, domain.ErrUnauthorized.Error(), nil)
 	default:
-		return ErrorResponse(c, http.StatusInternalServerError, "Internal server error", nil)
+		return ErrorResponse(c, http.StatusInternalServerError, domain.ErrInternalServerError.Error(), nil)
 	}
 }

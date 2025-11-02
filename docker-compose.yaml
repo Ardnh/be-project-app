@@ -10,6 +10,9 @@ services:
         ports:
             - "8080:8080"
         environment:
+            - APP_ENV=development
+            - APP_PORT=8080
+            - APP_JWT_SECRET=0199feec-c0ad-78d2-8e96-75af55cbbf38
             - DB_HOST=postgres
             - DB_PORT=5432
             - DB_USER=root
@@ -28,9 +31,10 @@ services:
 
     # PostgreSQL Database
     postgres:
-        image: postgres:15-alpine
+        image: postgres:13.22-alpine3.22
         container_name: postgres_db
-        # Port mapping dihapus - hanya accessible dari dalam Docker network
+        ports:
+            - "5432:5432"
         environment:
             - POSTGRES_USER=root
             - POSTGRES_PASSWORD=root
@@ -38,7 +42,7 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            test: ["CMD-SHELL", "pg_isready -U root"]
             interval: 10s
             timeout: 5s
             retries: 5
@@ -48,10 +52,8 @@ services:
 
     # Redis Cache
     redis:
-        image: redis:7-alpine
+        image: redis:alpine3.22
         container_name: redis_cache
-        ports:
-            - "6379:6379"
         command: redis-server --appendonly yes
         volumes:
             - redis_data:/data

@@ -24,5 +24,4 @@ type UpdateProjectTodolistsDto struct {
 	ID        string `json:"id" validate:"required"`
 	ProjectID string `json:"project_id" validate:"required"`
 	Name      string `json:"name" validate:"required"`
-	UpdatedAt string `json:"updated_at"`
 }

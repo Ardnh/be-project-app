@@ -38,6 +38,9 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *dto.LoginDto) (*string
 
 	user, err := s.userRepo.FindUserByEmail(ctx, req.Email)
 	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, domain.ErrUserNotFound
+		}
 		return nil, err
 	}
 

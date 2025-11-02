@@ -1,4 +1,6 @@
+# ===========================
 # Build stage
+# ===========================
 FROM golang:1.24-alpine AS builder
 
 # Install dependencies
@@ -7,31 +9,33 @@ RUN apk add --no-cache git
 # Set working directory
 WORKDIR /app
 
-# Copy go mod files
+# Copy go mod files and download dependencies
 COPY go.mod go.sum ./
-
-# Download dependencies
 RUN go mod download
 
-# Copy source code
+# Copy the rest of the source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/migrate ./cmd/migrate/main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/main ./cmd/server/main.go
+# Build the binaries
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/migrate ./cmd/migrate/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/server/main.go
 
+
+# ===========================
 # Final stage
+# ===========================
 FROM alpine:3.22.2
 
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-# Copy the binary from builder
-COPY --from=builder /app/main .
+# Copy binaries from builder
+COPY --from=builder /app/migrate /usr/local/bin/migrate
+COPY --from=builder /app/main /usr/local/bin/main
 
 # Expose port
 EXPOSE 8080
 
-# Run the application
-CMD ["sh", "-c", "./bin/migrate/migrate && ./bin/main/main"]
+# Run migrations then start server
+CMD ["sh", "-c", "migrate && main"]

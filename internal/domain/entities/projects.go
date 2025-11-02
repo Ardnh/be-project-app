@@ -13,13 +13,14 @@ import "time"
 //		DeletedAt    *time.Time `json:"deleted_at,omitempty" gorm:"index:idx_projects_deleted_at"`
 //	}
 type Projects struct {
-	ID           string  `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID       string  `gorm:"index"`
-	Name         string  `gorm:"size:200"`
-	Budget       float64 `gorm:"float"`
-	CategoryName string  `gorm:"size:200"`
-	StartDate    string  `gorm:"date"`
-	EndDate      string  `gorm:"date"`
+	ID           string     `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	UserID       string     `gorm:"index"`
+	Name         string     `gorm:"size:200"`
+	Budget       float64    `gorm:"float"`
+	CategoryName string     `gorm:"size:200"`
+	StartDate    *time.Time `gorm:"date"`
+	EndDate      *time.Time `gorm:"date"`
+	IsCompleted  bool       `gorm:"default:false"`
 
 	// Relasi
 	User             *User              `gorm:"foreignKey:UserID"`

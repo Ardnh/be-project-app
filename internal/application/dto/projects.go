@@ -62,15 +62,17 @@ type CreateProjectDto struct {
 	StartDate    string  `json:"start_date" validate:"omitempty,datetime=2006-01-02"`
 	EndDate      string  `json:"end_date" validate:"omitempty,datetime=2006-01-02"`
 	CategoryName string  `json:"category_name" validate:"required"`
+	IsCompleted  bool    `json:"is_completed" validated:"required"`
 }
 
 type UpdateProjectDto struct {
 	UserID       string  `json:"user_id" validate:"required"`
 	Name         string  `json:"name" validate:"required"`
 	Budget       float64 `json:"budget" validate:"required"`
-	StartDate    string  `json:"start_date"`
-	EndDate      string  `json:"end_date"`
-	CategoryName string  `json:"category_name"`
+	StartDate    string  `json:"start_date" validate:"omitempty,datetime=2006-01-02"`
+	EndDate      string  `json:"end_date" validate:"omitempty,datetime=2006-01-02"`
+	CategoryName string  `json:"category_name" validated:"required"`
+	IsCompleted  bool    `json:"is_completed" validated:"required"`
 }
 
 type ProjectUserSummaryDto struct {

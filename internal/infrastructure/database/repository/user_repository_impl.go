@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Ardnh/be-project-app/internal/domain"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
 	"github.com/go-redis/redis/v8"
@@ -27,15 +28,15 @@ func NewUserRepository(db *gorm.DB, redis *redis.Client) repositories.UserReposi
 
 func (r *userRepositoryImpl) FindByID(ctx context.Context, id string) (*entities.User, error) {
 
-	var user entities.User
+	var user *entities.User
 	err := r.db.Where("id = ?", id).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, domain.ErrUserNotFound
 		}
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (r *userRepositoryImpl) FindAll(ctx context.Context, limit int, offset int) ([]*entities.User, error) {
@@ -68,7 +69,7 @@ func (r *userRepositoryImpl) Delete(ctx context.Context, id string) error {
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return errors.New("user not found")
+			return domain.ErrUserNotFound
 		}
 		return nil
 	})
@@ -81,11 +82,13 @@ func (r *userRepositoryImpl) ExistsByEmail(ctx context.Context, email string) (b
 }
 
 func (r *userRepositoryImpl) FindUserByEmail(ctx context.Context, email string) (*entities.User, error) {
-	var user *entities.User
+	var user entities.User
 	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrUserNotFound
+		}
 		return nil, err
 	}
-
-	return user, nil
+	return &user, nil
 }

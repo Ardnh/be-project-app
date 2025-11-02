@@ -70,3 +70,25 @@ func (s *userService) CreateUser(ctx context.Context, user *dto.CreateUserDto) e
 
 	return nil
 }
+
+func (s *userService) UpdateUser(ctx context.Context, user *dto.UpdateUserDto) error {
+
+	existingUser, err := s.userRepo.ExistsByEmail(ctx, user.Email)
+	if err == nil && existingUser {
+		return domain.ErrEmailAlreadyExists
+	}
+
+	userEntities := &entities.User{
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	errCreate := s.userRepo.Create(ctx, userEntities)
+	if errCreate != nil {
+		return errCreate
+	}
+
+	return nil
+}

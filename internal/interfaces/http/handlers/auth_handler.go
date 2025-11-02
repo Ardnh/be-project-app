@@ -39,15 +39,16 @@ func (h *AuthHandlers) Login(c *fiber.Ctx) error {
 
 	tokenString, err := h.authService.Login(c.Context(), &req)
 	if err != nil {
-		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
+		return http.HandleServiceError(c, err)
 	}
 
 	res := map[string]any{
 		"token": tokenString,
 	}
 
-	return http.SuccessResponse(c, fiber.StatusCreated, "Login successfully", res)
+	return http.SuccessResponse(c, fiber.StatusOK, "Login successfully", res)
 }
+
 func (h *AuthHandlers) Register(c *fiber.Ctx) error {
 
 	var req dto.RegisterDto
@@ -69,5 +70,5 @@ func (h *AuthHandlers) Register(c *fiber.Ctx) error {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusCreated, "Register successfully", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Register successfully", nil)
 }

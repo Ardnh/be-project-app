@@ -8,7 +8,7 @@ import (
 	http "github.com/Ardnh/be-project-app/internal/interfaces/http/responses"
 	validation_utils "github.com/Ardnh/be-project-app/internal/utils/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -27,42 +27,28 @@ func NewUserHandler(userService services.UserService, validator *validator.Valid
 	}
 }
 
-func (h *UserHandler) GetUserByID(c *fiber.Ctx) error {
-	// 1. Ambil ID dari URL params
-	id := c.Params("id")
-	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "User ID is required",
-		})
+// GetUserByToken handles user profile retrieval from JWT token
+func (h *UserHandler) GetUserByToken(c *fiber.Ctx) error {
+	// 1. Ambil JWT claims dari context
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return http.ErrorResponse(c, fiber.StatusUnauthorized, "Invalid token claims", nil)
 	}
 
-	// 2. Parse UUID (jika menggunakan UUID)
-	userID, err := uuid.Parse(id)
+	// 2. Ambil user_id dari claims
+	userID, ok := claims["user_id"].(string)
+	if !ok || userID == "" {
+		return http.ErrorResponse(c, fiber.StatusUnauthorized, "Invalid token payload", nil)
+	}
+
+	// 3. Ambil user dari service layer
+	user, err := h.userService.GetUserByID(c.Context(), userID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid user ID format",
-		})
+		return http.HandleServiceError(c, err)
 	}
 
-	// 3. Call service
-	user, err := h.userService.GetUserByID(c.Context(), userID.String())
-	if err != nil {
-		// Handle error based on type
-		if err.Error() == "user not found" { // atau gunakan custom error
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "User not found",
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to get user",
-		})
-	}
-
-	// 4. Return success response
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "User retrieved successfully",
-		"data":    user,
-	})
+	// 5. Return success response
+	return http.SuccessResponse(c, fiber.StatusOK, "Successfully retrieved user", user)
 }
 
 func (h *UserHandler) GetAllUsers(c *fiber.Ctx) error {

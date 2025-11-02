@@ -34,8 +34,8 @@ func SetupAPIRoutes(
 		// User routes
 		users := protected.Group("/users")
 		{
-			users.Get("/", userHandler.GetAllUsers)
-			users.Get("/:id", userHandler.GetUserByID)
+			users.Get("/all", userHandler.GetAllUsers)
+			users.Get("/", userHandler.GetUserByToken)
 			users.Post("/", userHandler.CreateUser)
 			users.Put("/:id", userHandler.UpdateUser)
 			users.Delete("/:id", userHandler.DeleteUser)
