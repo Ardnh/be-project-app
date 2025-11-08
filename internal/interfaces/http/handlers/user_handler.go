@@ -85,10 +85,50 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 
 func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 
-	return nil
+	userId := c.Params("id", "")
+	if userId == "" {
+		return http.ErrorResponse(c, fiber.StatusBadRequest, "User ID is required", nil)
+	}
+
+	var req dto.UpdateUserDto
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Trim spaces
+	req.Username = strings.TrimSpace(req.Username)
+	req.Email = strings.TrimSpace(req.Email)
+
+	// Validate
+	if err := h.validator.Struct(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": validation_utils.FormatValidationErrors(err),
+		})
+	}
+
+	req.ID = userId
+
+	err := h.userService.UpdateUser(c.Context(), &req)
+	if err != nil {
+		return http.HandleServiceError(c, err)
+	}
+
+	return http.SuccessResponse(c, fiber.StatusOK, "Success update user", nil)
 }
 
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 
-	return nil
+	userId := c.Params("id", "")
+	if userId == "" {
+		return http.ErrorResponse(c, fiber.StatusBadRequest, "User ID is required", nil)
+	}
+
+	err := h.userService.DeleteUser(c.Context(), userId)
+	if err != nil {
+		return http.HandleServiceError(c, err)
+	}
+
+	return http.SuccessResponse(c, fiber.StatusOK, "Success delete user", nil)
 }

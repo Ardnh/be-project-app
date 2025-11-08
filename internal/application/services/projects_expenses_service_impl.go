@@ -37,9 +37,8 @@ func (s *projectExpensesService) CreateProjectsExpenses(ctx context.Context, exp
 func (s *projectExpensesService) UpdateProjectsExpenses(ctx context.Context, id string, expenses *dto.UpdateProjectsExpensesDto) error {
 
 	req := &entities.ProjectExpenses{
-		ID:        id,
-		ProjectID: expenses.ProjectID,
-		Name:      expenses.Name,
+		ID:   id,
+		Name: expenses.Name,
 	}
 
 	err := s.projectsExpensesRepo.Update(ctx, req)

@@ -73,9 +73,9 @@ func (s *userService) CreateUser(ctx context.Context, user *dto.CreateUserDto) e
 
 func (s *userService) UpdateUser(ctx context.Context, user *dto.UpdateUserDto) error {
 
-	existingUser, err := s.userRepo.ExistsByEmail(ctx, user.Email)
-	if err == nil && existingUser {
-		return domain.ErrEmailAlreadyExists
+	_, err := s.userRepo.FindByID(ctx, user.ID)
+	if err != nil {
+		return domain.ErrUserNotFound
 	}
 
 	userEntities := &entities.User{
@@ -85,9 +85,24 @@ func (s *userService) UpdateUser(ctx context.Context, user *dto.UpdateUserDto) e
 		UpdatedAt: time.Now(),
 	}
 
-	errCreate := s.userRepo.Create(ctx, userEntities)
-	if errCreate != nil {
-		return errCreate
+	errUpdate := s.userRepo.Update(ctx, userEntities)
+	if errUpdate != nil {
+		return errUpdate
+	}
+
+	return nil
+}
+
+func (s *userService) DeleteUser(ctx context.Context, userId string) error {
+
+	_, err := s.userRepo.FindByID(ctx, userId)
+	if err != nil {
+		return domain.ErrUserNotFound
+	}
+
+	errDelete := s.userRepo.Delete(ctx, userId)
+	if errDelete != nil {
+		return errDelete
 	}
 
 	return nil

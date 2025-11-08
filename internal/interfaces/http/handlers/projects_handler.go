@@ -53,7 +53,7 @@ func (h *ProjectsHandler) CreateProject(c *fiber.Ctx) error {
 
 func (h *ProjectsHandler) GetProjectsByUserId(c *fiber.Ctx) error {
 	// 1. Get user_id dari URL params
-	userId := c.Params("user_id")
+	userId := c.Params("user_id", "")
 	if userId == "" {
 		return http.ErrorResponse(c, fiber.StatusBadRequest, "User ID is required", nil)
 	}

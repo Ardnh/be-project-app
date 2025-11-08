@@ -11,4 +11,5 @@ type UserService interface {
 	GetAllUsers(ctx context.Context) ([]*dto.UserDto, error)
 	CreateUser(ctx context.Context, user *dto.CreateUserDto) error
 	UpdateUser(ctx context.Context, user *dto.UpdateUserDto) error
+	DeleteUser(ctx context.Context, userId string) error
 }
