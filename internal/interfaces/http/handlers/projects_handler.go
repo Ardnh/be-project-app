@@ -64,12 +64,18 @@ func (h *ProjectsHandler) GetProjectsByUserId(c *fiber.Ctx) error {
 		limit = 10
 	}
 	if limit > 50 {
-		limit = 50 // Max limit untuk prevent abuse
+		limit = 50
 	}
 
-	offset, err := strconv.Atoi(c.Query("offset", "0"))
-	if err != nil || offset < 0 {
-		offset = 0
+	// 3. Parse query parameters page
+	var offset int
+	pageStr := c.Query("page", "1")
+	if pageStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			page = 1
+		}
+		offset = (page - 1) * limit
 	}
 
 	sortBy := c.Query("sort_by", "created_at")

@@ -34,7 +34,7 @@ func ToProjectDTO(project *entities.Projects) *dto.ProjectsDto {
 
 func ToProjectsByUserDTO(entities []*entities.ProjectsByUserId) []*dto.ProjectsByUserIdDto {
 	if entities == nil {
-		return []*dto.ProjectsByUserIdDto{} // return empty slice, bukan nil
+		return []*dto.ProjectsByUserIdDto{}
 	}
 
 	dtos := make([]*dto.ProjectsByUserIdDto, len(entities))
@@ -45,6 +45,7 @@ func ToProjectsByUserDTO(entities []*entities.ProjectsByUserId) []*dto.ProjectsB
 		}
 
 		daysRemaining := date_utils.CalculateDaysRemaining(entity.EndDate)
+		daysRemainingStatus := date_utils.GetDaysRemainingStatus(daysRemaining)
 		dtos[i] = &dto.ProjectsByUserIdDto{
 			ProjectID:             entity.ProjectID,
 			UserID:                entity.UserID,
@@ -58,6 +59,7 @@ func ToProjectsByUserDTO(entities []*entities.ProjectsByUserId) []*dto.ProjectsB
 			TotalTodolistItemDone: entity.TotalTodolistItemDone,
 			TotalTodolistItem:     entity.TotalTodolistItem,
 			DaysRemaining:         daysRemaining,
+			DaysRemainingStatus:   daysRemainingStatus,
 			CompletionPercetage:   entity.CompletionPercentage,
 		}
 	}
@@ -189,13 +191,24 @@ func ToProjectTodolistItemDTO(expensesItem entities.ProjectTodolistItems) *dto.P
 
 func ToProjectCategorySummaryDTO(projectCategory []*entities.ProjectCategorySummary) []*dto.ProjectCategorySummaryDto {
 
-	var result = make([]*dto.ProjectCategorySummaryDto, 0, len(projectCategory))
+	var result = make([]*dto.ProjectCategorySummaryDto, 0, len(projectCategory)+1)
+
+	totalAll := 0
 	for _, item := range projectCategory {
+		totalAll += item.Total
 		result = append(result, &dto.ProjectCategorySummaryDto{
 			CategoryName: item.CategoryName,
 			Total:        item.Total,
 		})
 	}
+
+	// Tambahkan kategori "All"
+	result = append([]*dto.ProjectCategorySummaryDto{
+		{
+			CategoryName: "All",
+			Total:        totalAll,
+		},
+	}, result...)
 
 	return result
 }

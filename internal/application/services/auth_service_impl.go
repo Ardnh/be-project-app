@@ -25,30 +25,30 @@ func NewAuthService(userRepo repositories.UserRepository) services.AuthService {
 	}
 }
 
-func (s *AuthServiceImpl) Login(ctx context.Context, req *dto.LoginDto) (*string, error) {
+func (s *AuthServiceImpl) Login(ctx context.Context, req *dto.LoginDto) (*string, *string, error) {
 
 	emailIsExist, err := s.userRepo.ExistsByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !emailIsExist {
-		return nil, domain.ErrUserNotFound
+		return nil, nil, domain.ErrUserNotFound
 	}
 
 	user, err := s.userRepo.FindUserByEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return nil, domain.ErrUserNotFound
+			return nil, nil, domain.ErrUserNotFound
 		}
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Generate jwt token
 	// Load config
 	config := config.LoadConfig()
 	if config.App.JWTSecret == "" {
-		return nil, errors.New("Failed to load jwt secret")
+		return nil, nil, errors.New("Failed to load jwt secret")
 	}
 
 	// Secret key untuk signing
@@ -58,18 +58,20 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *dto.LoginDto) (*string
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	// Set claims (data dalam token)
+	expiredTime := time.Now().Add(time.Hour * 24).Unix()
+	expiredTimeISO := time.Unix(expiredTime, 0).Format(time.RFC3339)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = user.ID
 	claims["email"] = user.Email
-	claims["exp"] = time.Now().Add(time.Hour * 24).Unix() // Expire 24 jam
+	claims["exp"] = expiredTime // Expire 24 jam
 
 	// Generate signed token string
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &tokenString, nil
+	return &tokenString, &expiredTimeISO, nil
 }
 
 func (s *AuthServiceImpl) Register(ctx context.Context, req *dto.RegisterDto) error {

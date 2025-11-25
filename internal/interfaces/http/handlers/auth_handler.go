@@ -37,13 +37,14 @@ func (h *AuthHandlers) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	tokenString, err := h.authService.Login(c.Context(), &req)
+	tokenString, expireDate, err := h.authService.Login(c.Context(), &req)
 	if err != nil {
 		return http.HandleServiceError(c, err)
 	}
 
 	res := map[string]any{
-		"token": tokenString,
+		"token":      tokenString,
+		"expired_at": expireDate,
 	}
 
 	return http.SuccessResponse(c, fiber.StatusOK, "Login successfully", res)
