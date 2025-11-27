@@ -7,6 +7,6 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, req *dto.LoginDto) (*string, error)
+	Login(ctx context.Context, req *dto.LoginDto) (*string, *string, error)
 	Register(ctx context.Context, req *dto.RegisterDto) error
 }

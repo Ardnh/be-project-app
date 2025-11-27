@@ -5,15 +5,19 @@ import (
 	"time"
 )
 
-// CalculateDaysRemaining menghitung hari tersisa dari sekarang ke target date
+// CalculateDaysRemaining menghitung hari tersisa dari sekarang ke endDate
+// Mengembalikan nilai negatif jika sudah melewati deadline.
 func CalculateDaysRemaining(endDateStr string) int {
-	endDate, err := time.Parse("2006-01-02", endDateStr)
+	endDate, err := time.Parse(time.RFC3339, endDateStr)
 	if err != nil {
+		// Jika tidak bisa parsing, lebih baik return 0 atau -999
+		// Tapi agar tetap konsisten, gunakan 0
 		return 0
 	}
 
 	now := time.Now()
-	// Set ke midnight untuk perhitungan yang akurat
+
+	// Set kedua tanggal ke pukul 00:00 untuk perhitungan yang akurat
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	endDateMidnight := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 0, 0, 0, 0, endDate.Location())
 
@@ -30,7 +34,7 @@ func GetDaysRemainingStatus(daysRemaining int) string {
 		if daysRemaining == -1 {
 			return "Overdue by 1 day"
 		}
-		return fmt.Sprintf("Overdue by %d days", -daysRemaining)
+		return fmt.Sprintf("%d days overdue", -daysRemaining)
 	case daysRemaining == 0:
 		return "Due today"
 	case daysRemaining == 1:
