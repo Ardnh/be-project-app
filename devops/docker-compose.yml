@@ -1,0 +1,129 @@
+version: "3.8"
+
+services:
+    # Database migration (run once)
+    db-migrate:
+        image: ${DEPLOY_IMAGE:-ghcr.io/user/repo:latest}
+        command: ["/bin/migrate"]
+        environment:
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_USER=${DB_USER}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - DB_NAME=${DB_NAME}
+            - DB_SSLMODE=disable
+        depends_on:
+            postgres:
+                condition: service_healthy
+        restart: "no"
+        networks:
+            - app-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Main application
+    main-app:
+        image: ${DEPLOY_IMAGE:-ghcr.io/user/repo:latest}
+        command: ["/bin/main"]
+        ports:
+            - "8080:8080"
+        environment:
+            - APP_ENV=production
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_USER=${DB_USER}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - DB_NAME=${DB_NAME}
+            - DB_SSLMODE=disable
+            - JWT_SECRET=${JWT_SECRET}
+            - API_KEY=${API_KEY}
+        depends_on:
+            - postgres
+        restart: unless-stopped
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--quiet",
+                    "--tries=1",
+                    "--spider",
+                    "http://localhost:8080/health",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+        networks:
+            - app-network
+        volumes:
+            - app-data:/app/data
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+                max-file: "5"
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 512M
+                reservations:
+                    cpus: "0.5"
+                    memory: 256M
+
+    # PostgreSQL database
+    postgres:
+        image: postgres:16-alpine
+        environment:
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_DB=${DB_NAME}
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+            - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+        networks:
+            - app-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Redis (optional - for caching/sessions)
+    redis:
+        image: redis:7-alpine
+        command: redis-server --appendonly yes
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 3s
+            retries: 3
+        restart: unless-stopped
+        networks:
+            - app-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+volumes:
+    postgres-data:
+    redis-data:
+    app-data:
+
+networks:
+    app-network:
+        driver: bridge
