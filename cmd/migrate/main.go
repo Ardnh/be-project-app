@@ -9,8 +9,6 @@ import (
 	"github.com/Ardnh/be-project-app/internal/infrastructure/database/migrations"
 	"github.com/Ardnh/be-project-app/internal/infrastructure/database/postgresql"
 
-	// PENTING! Import package migrations dengan blank identifier
-	// Ini akan trigger semua init() functions di migration files
 	_ "github.com/Ardnh/be-project-app/internal/infrastructure/database/migrations"
 )
 
