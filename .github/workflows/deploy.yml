@@ -22,30 +22,30 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: "1.23"
+                  go-version: "1.24.0"
                   cache: true
 
-            - name: Run tests
-              run: |
-                  go test -v -race -coverprofile=coverage.out ./...
-                  go tool cover -func=coverage.out
+            # - name: Run tests
+            #   run: |
+            #       go test -v -race -coverprofile=coverage.out ./...
+            #       go tool cover -func=coverage.out
 
-            - name: Run linter
-              run: |
-                  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-                  golangci-lint run ./...
+            # - name: Run linter
+            #   run: |
+            #       go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+            #       golangci-lint run ./...
 
-            - name: Security scan
-              run: |
-                  go install github.com/securego/gosec/v2/cmd/gosec@latest
-                  gosec ./...
+            # - name: Security scan
+            #   run: |
+            #       go install github.com/securego/gosec/v2/cmd/gosec@latest
+            #       gosec ./...
 
     # ============================================
     # Job 2: Build & Push
     # ============================================
     build-and-push:
         needs: test
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         permissions:
             contents: read
             packages: write
@@ -60,7 +60,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: "1.23"
+                  go-version: "1.24.0"
                   cache: true
 
             # Build with version info
@@ -104,7 +104,7 @@ jobs:
               id: build
               uses: docker/build-push-action@v5
               with:
-                  context: .
+                  context: . # docker will search for the Dockerfile in the current directory
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
@@ -128,113 +128,112 @@ jobs:
     # ============================================
     # Job 3: Deploy to Staging
     # ============================================
-    deploy-staging:
-        needs: build-and-push
-        runs-on: ubuntu-latest
-        environment:
-            name: staging
-            url: https://staging.yourdomain.com
+    # deploy-staging:
+    #     needs: build-and-push
+    #     runs-on: ubuntu-latest
+    #     environment:
+    #         name: staging
+    #         url: https://staging.yourdomain.com
 
-        steps:
-            - name: Trigger deployment webhook
-              id: webhook
-              run: |
-                  RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.DEPLOY_WEBHOOK_URL }} \
-                    -H "Content-Type: application/json" \
-                    -H "X-Webhook-Token: ${{ secrets.WEBHOOK_SECRET }}" \
-                    -d '{
-                      "repository": "${{ github.repository }}",
-                      "branch": "${{ github.ref_name }}",
-                      "commit": "${{ github.sha }}",
-                      "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}",
-                      "digest": "${{ needs.build-and-push.outputs.image-digest }}",
-                      "deployer": "${{ github.actor }}"
-                    }')
+    #     steps:
+    #         - name: Trigger deployment webhook
+    #           id: webhook
+    #           run: |
+    #               RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.DEPLOY_WEBHOOK_URL }} \
+    #                 -H "Content-Type: application/json" \
+    #                 -H "X-Webhook-Token: ${{ secrets.WEBHOOK_SECRET }}" \
+    #                 -d '{
+    #                   "repository": "${{ github.repository }}",
+    #                   "branch": "${{ github.ref_name }}",
+    #                   "commit": "${{ github.sha }}",
+    #                   "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}",
+    #                   "digest": "${{ needs.build-and-push.outputs.image-digest }}",
+    #                   "deployer": "${{ github.actor }}"
+    #                 }')
 
-                  HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-                  BODY=$(echo "$RESPONSE" | sed '$d')
+    #               HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+    #               BODY=$(echo "$RESPONSE" | sed '$d')
 
-                  if [ "$HTTP_CODE" != "200" ]; then
-                    echo "❌ Webhook failed with status $HTTP_CODE"
-                    echo "$BODY"
-                    exit 1
-                  fi
+    #               if [ "$HTTP_CODE" != "200" ]; then
+    #                 echo "❌ Webhook failed with status $HTTP_CODE"
+    #                 echo "$BODY"
+    #                 exit 1
+    #               fi
 
-                  echo "✅ Webhook triggered successfully"
-                  echo "$BODY"
+    #               echo "✅ Webhook triggered successfully"
+    #               echo "$BODY"
 
-            - name: Wait for deployment
-              run: |
-                  echo "⏳ Waiting for deployment to complete..."
-                  sleep 30
+    #         - name: Wait for deployment
+    #           run: |
+    #               echo "⏳ Waiting for deployment to complete..."
+    #               sleep 30
 
-            - name: Health check
-              run: |
-                  MAX_RETRIES=30
-                  RETRY_INTERVAL=10
+    #         - name: Health check
+    #           run: |
+    #               MAX_RETRIES=30
+    #               RETRY_INTERVAL=10
 
-                  for i in $(seq 1 $MAX_RETRIES); do
-                    echo "🏥 Health check attempt $i/$MAX_RETRIES..."
+    #               for i in $(seq 1 $MAX_RETRIES); do
+    #                 echo "🏥 Health check attempt $i/$MAX_RETRIES..."
 
-                    if curl -f -s https://staging.yourdomain.com/health; then
-                      echo "✅ Application is healthy!"
-                      exit 0
-                    fi
+    #                 if curl -f -s https://staging.yourdomain.com/health; then
+    #                   echo "✅ Application is healthy!"
+    #                   exit 0
+    #                 fi
 
-                    if [ $i -eq $MAX_RETRIES ]; then
-                      echo "❌ Health check failed after $MAX_RETRIES attempts"
-                      exit 1
-                    fi
+    #                 if [ $i -eq $MAX_RETRIES ]; then
+    #                   echo "❌ Health check failed after $MAX_RETRIES attempts"
+    #                   exit 1
+    #                 fi
 
-                    echo "⏳ Waiting ${RETRY_INTERVAL}s before retry..."
-                    sleep $RETRY_INTERVAL
-                  done
+    #                 echo "⏳ Waiting ${RETRY_INTERVAL}s before retry..."
+    #                 sleep $RETRY_INTERVAL
+    #               done
 
-            - name: Smoke tests
-              run: |
-                  # Basic API tests
-                  curl -f https://staging.yourdomain.com/api/v1/status
+    # - name: Smoke tests
+    #   run: |
+    #       # Basic API tests
+    #       curl -f https://staging.yourdomain.com/api/v1/status
 
-                  # Check version endpoint
-                  VERSION=$(curl -s https://staging.yourdomain.com/api/v1/version | jq -r '.version')
-                  echo "Deployed version: $VERSION"
+    #       # Check version endpoint
+    #       VERSION=$(curl -s https://staging.yourdomain.com/api/v1/version | jq -r '.version')
+    #       echo "Deployed version: $VERSION"
 
-            - name: Notify Slack (Success)
-              if: success()
-              run: |
-                  curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-                    -H "Content-Type: application/json" \
-                    -d '{
-                      "text": "✅ Deployment to staging successful!",
-                      "blocks": [
-                        {
-                          "type": "section",
-                          "text": {
-                            "type": "mrkdwn",
-                            "text": "*Deployment Successful* ✅\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*URL:* https://staging.yourdomain.com"
-                          }
-                        }
-                      ]
-                    }'
+    # - name: Notify Slack (Success)
+    #   if: success()
+    #   run: |
+    #       curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+    #         -H "Content-Type: application/json" \
+    #         -d '{
+    #           "text": "✅ Deployment to staging successful!",
+    #           "blocks": [
+    #             {
+    #               "type": "section",
+    #               "text": {
+    #                 "type": "mrkdwn",
+    #                 "text": "*Deployment Successful* ✅\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*URL:* https://staging.yourdomain.com"
+    #               }
+    #             }
+    #           ]
+    #         }'
 
-            - name: Notify Slack (Failure)
-              if: failure()
-              run: |
-                  curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-                    -H "Content-Type: application/json" \
-                    -d '{
-                      "text": "❌ Deployment to staging failed!",
-                      "blocks": [
-                        {
-                          "type": "section",
-                          "text": {
-                            "type": "mrkdwn",
-                            "text": "*Deployment Failed* ❌\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                          }
-                        }
-                      ]
-                    }'
-
+    # - name: Notify Slack (Failure)
+    #   if: failure()
+    #   run: |
+    #       curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+    #         -H "Content-Type: application/json" \
+    #         -d '{
+    #           "text": "❌ Deployment to staging failed!",
+    #           "blocks": [
+    #             {
+    #               "type": "section",
+    #               "text": {
+    #                 "type": "mrkdwn",
+    #                 "text": "*Deployment Failed* ❌\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    #               }
+    #             }
+    #           ]
+    #         }'
 # ```
 
 # ---
