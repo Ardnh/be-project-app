@@ -31,7 +31,7 @@ services:
 
     # PostgreSQL Database
     postgres:
-        image: postgres:13.22-alpine3.22
+        image: postgres:17-alpine
         container_name: postgres_db
         ports:
             - "5432:5432"
@@ -42,7 +42,7 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U root"]
+            test: ["CMD-SHELL", "pg_isready -U postgres -d project_app_db"] # ✅ Specify database
             interval: 10s
             timeout: 5s
             retries: 5
