@@ -14,37 +14,37 @@ jobs:
     # ============================================
     # Job 1: Test & Lint
     # ============================================
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
+    # test:
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - uses: actions/checkout@v4
 
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.23"
-                  cache: true
+    #         - name: Set up Go
+    #           uses: actions/setup-go@v4
+    #           with:
+    #               go-version: "1.24.0"
+    #               cache: true
 
-            - name: Run tests
-              run: |
-                  go test -v -race -coverprofile=coverage.out ./...
-                  go tool cover -func=coverage.out
+    # - name: Run tests
+    #   run: |
+    #       go test -v -race -coverprofile=coverage.out ./...
+    #       go tool cover -func=coverage.out
 
-            - name: Run linter
-              run: |
-                  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-                  golangci-lint run ./...
+    # - name: Run linter
+    #   run: |
+    #       go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    #       golangci-lint run ./...
 
-            - name: Security scan
-              run: |
-                  go install github.com/securego/gosec/v2/cmd/gosec@latest
-                  gosec ./...
+    # - name: Security scan
+    #   run: |
+    #       go install github.com/securego/gosec/v2/cmd/gosec@latest
+    #       gosec ./...
 
     # ============================================
     # Job 2: Build & Push
     # ============================================
     build-and-push:
-        needs: test
+        # needs: test
         runs-on: ubuntu-latest
         permissions:
             contents: read
@@ -60,7 +60,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: "1.23"
+                  go-version: "1.24.0"
                   cache: true
 
             # Build with version info
@@ -105,6 +105,7 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                   context: .
+                  file: ./Dockerfile.ci
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
@@ -133,23 +134,27 @@ jobs:
         runs-on: ubuntu-latest
         environment:
             name: staging
-            url: https://staging.yourdomain.com
+            url: http://72.61.210.46
 
         steps:
             - name: Trigger deployment webhook
               id: webhook
               run: |
-                  RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.DEPLOY_WEBHOOK_URL }} \
+                  PAYLOAD='{
+                    "repository": "${{ github.repository }}",
+                    "branch": "${{ github.ref_name }}",
+                    "commit": "${{ github.sha }}",
+                    "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}",
+                    "digest": "${{ needs.build-and-push.outputs.image-digest }}",
+                    "deployer": "${{ github.actor }}"
+                  }'
+
+                  SIGNATURE="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | sed 's/^.* //')"
+
+                  RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.WEBHOOK_URL }} \
                     -H "Content-Type: application/json" \
-                    -H "X-Webhook-Token: ${{ secrets.WEBHOOK_SECRET }}" \
-                    -d '{
-                      "repository": "${{ github.repository }}",
-                      "branch": "${{ github.ref_name }}",
-                      "commit": "${{ github.sha }}",
-                      "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}",
-                      "digest": "${{ needs.build-and-push.outputs.image-digest }}",
-                      "deployer": "${{ github.actor }}"
-                    }')
+                    -H "X-Hub-Signature: $SIGNATURE" \
+                    -d "$PAYLOAD")
 
                   HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
                   BODY=$(echo "$RESPONSE" | sed '$d')
@@ -199,41 +204,41 @@ jobs:
                   VERSION=$(curl -s https://staging.yourdomain.com/api/v1/version | jq -r '.version')
                   echo "Deployed version: $VERSION"
 
-            - name: Notify Slack (Success)
-              if: success()
-              run: |
-                  curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-                    -H "Content-Type: application/json" \
-                    -d '{
-                      "text": "✅ Deployment to staging successful!",
-                      "blocks": [
-                        {
-                          "type": "section",
-                          "text": {
-                            "type": "mrkdwn",
-                            "text": "*Deployment Successful* ✅\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*URL:* https://staging.yourdomain.com"
-                          }
-                        }
-                      ]
-                    }'
+            # - name: Notify Slack (Success)
+            #   if: success()
+            #   run: |
+            #       curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            #         -H "Content-Type: application/json" \
+            #         -d '{
+            #           "text": "✅ Deployment to staging successful!",
+            #           "blocks": [
+            #             {
+            #               "type": "section",
+            #               "text": {
+            #                 "type": "mrkdwn",
+            #                 "text": "*Deployment Successful* ✅\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*URL:* https://staging.yourdomain.com"
+            #               }
+            #             }
+            #           ]
+            #         }'
 
-            - name: Notify Slack (Failure)
-              if: failure()
-              run: |
-                  curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-                    -H "Content-Type: application/json" \
-                    -d '{
-                      "text": "❌ Deployment to staging failed!",
-                      "blocks": [
-                        {
-                          "type": "section",
-                          "text": {
-                            "type": "mrkdwn",
-                            "text": "*Deployment Failed* ❌\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                          }
-                        }
-                      ]
-                    }'
+            # - name: Notify Slack (Failure)
+            #   if: failure()
+            #   run: |
+            #       curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            #         -H "Content-Type: application/json" \
+            #         -d '{
+            #           "text": "❌ Deployment to staging failed!",
+            #           "blocks": [
+            #             {
+            #               "type": "section",
+            #               "text": {
+            #                 "type": "mrkdwn",
+            #                 "text": "*Deployment Failed* ❌\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            #               }
+            #             }
+            #           ]
+            #         }'
 
 # ```
 

@@ -1,0 +1,7 @@
+FROM alpine:3.22.2
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY ./bin/migrate /usr/local/bin/migrate
+COPY ./bin/main /usr/local/bin/main
+EXPOSE 8080
+CMD ["sh", "-c", "migrate && main"]
