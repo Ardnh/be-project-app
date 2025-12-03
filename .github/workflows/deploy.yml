@@ -63,7 +63,7 @@ jobs:
                   go-version: "1.24.0"
                   cache: true
 
-            # Build with version info
+            # Build with version info (Github)
             - name: Build Go binaries
               run: |
                   VERSION="${{ github.ref_name }}"
