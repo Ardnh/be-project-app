@@ -32,9 +32,9 @@ jobs:
                   file: ./Dockerfile
                   push: true
                   tags: |
-                      ${{ secrets.DOCKERHUB_USERNAME }}/app-name:latest
-                      ${{ secrets.DOCKERHUB_USERNAME }}/app-name:${{ github.sha }}
-                  cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/app-name:latest
+                      ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
+                      ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+                  cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
                   cache-to: type=inline
 
             # 5. Trigger Webhook VPS dengan HMAC Signature
