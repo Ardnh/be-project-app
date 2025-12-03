@@ -1,14 +1,11 @@
 name: Deploy to VPS (Simple)
-
 on:
     push:
         branches:
             - staging
-
 jobs:
     build-and-deploy:
         runs-on: ubuntu-latest
-
         steps:
             # 1. Checkout source code
             - name: Checkout code
@@ -18,29 +15,75 @@ jobs:
             - name: Login to Docker Hub
               run: echo "Login to Docker Hub"
 
-            # 3. Build Docker image
-            - name: Build Docker image
-              run: echo "Building Docker image..."
+            # 3. Build Docker image dengan metadata
+            - name: Set up Docker Buildx
+              run: echo "Set up Docker Buildx"
 
-            # 4. Push image ke Docker Hub
-            - name: Push Docker image
-              run:
-                  echo "Pushing Docker image..."
+            # 4. Build and Push Docker image
+            - name: Build and Push Docker image
+              run: echo "Build and Push Docker image"
 
-                  # 5. Trigger Webhook VPS dengan HMAC Signature
-            - name: Notify VPS (with X-Hub-Signature)
+            # 5. Trigger Webhook VPS dengan HMAC Signature
+            - name: Notify VPS (with X-Hub-Signature-256)
               env:
                   WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
                   WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
               run: |
-                  # Payload sederhana
-                  PAYLOAD='{"event": "deploy", "app": "myapp"}'
+                  # Escape commit message dengan benar
+                  COMMIT_MSG=$(echo '${{ github.event.head_commit.message }}' | jq -Rs . | sed 's/^"//;s/"$//')
 
-                  # Generate HMAC SHA256
+                  # Buat payload dengan jq untuk ensure valid JSON
+                  PAYLOAD=$(jq -n \
+                    --arg repo "${{ github.repository }}" \
+                    --arg branch "${{ github.ref_name }}" \
+                    --arg commit "${{ github.sha }}" \
+                    --arg commit_short "${GITHUB_SHA:0:7}" \
+                    --arg commit_msg "$COMMIT_MSG" \
+                    --arg image "Ardnh7/be-project-app:staging" \
+                    --arg image_tag "staging-${{ github.sha }}" \
+                    --arg digest "${{ steps.docker_build.outputs.digest }}" \
+                    --arg deployer "${{ github.actor }}" \
+                    --arg workflow_run_id "${{ github.run_id }}" \
+                    --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                    '{
+                      repository: $repo,
+                      branch: $branch,
+                      commit: $commit,
+                      commit_short: $commit_short,
+                      commit_message: $commit_msg,
+                      image: $image,
+                      image_tag: $image_tag,
+                      digest: $digest,
+                      deployer: $deployer,
+                      workflow_run_id: $workflow_run_id,
+                      timestamp: $timestamp
+                    }')
+
+                  # Debug: tampilkan payload (pretty)
+                  echo "📦 Payload:"
+                  echo "$PAYLOAD" | jq .
+
+                  # Generate signature dari PAYLOAD yang akan dikirim
                   SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
 
-                  # Kirim request ke VPS dengan header signature
-                  curl -X POST "$WEBHOOK_URL" \
+                  echo "🔐 Signature: sha256=$SIGNATURE"
+                  echo "🔗 URL: $WEBHOOK_URL"
+
+                  # Kirim request
+                  HTTP_CODE=$(curl -X POST "$WEBHOOK_URL" \
                     -H "Content-Type: application/json" \
-                    -H "X-Hub-Signature: sha256=$SIGNATURE" \
-                    -d "$PAYLOAD"
+                    -H "X-Hub-Signature-256: sha256=$SIGNATURE" \
+                    --data "$PAYLOAD" \
+                    -w "%{http_code}" \
+                    -s -o response.json)
+
+                  echo "📨 Response (HTTP $HTTP_CODE):"
+                  cat response.json | jq . 2>/dev/null || cat response.json
+                  echo ""
+
+                  if [ "$HTTP_CODE" = "200" ]; then
+                    echo "✅ Deployment triggered successfully!"
+                  else
+                    echo "❌ Failed to trigger deployment. HTTP Code: $HTTP_CODE"
+                    exit 1
+                  fi
