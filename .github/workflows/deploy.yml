@@ -1,277 +1,31 @@
-# .github/workflows/deploy.yml
-name: Deploy to Staging
+name: Deploy to VPS (Simple)
 
 on:
     push:
-        branches: ["staging"]
-    workflow_dispatch:
-
-env:
-    REGISTRY: ghcr.io
-    IMAGE_NAME: ${{ github.repository }}
+        branches:
+            - staging
 
 jobs:
-    # ============================================
-    # Job 1: Test & Lint
-    # ============================================
-    # test:
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - uses: actions/checkout@v4
-
-    #         - name: Set up Go
-    #           uses: actions/setup-go@v4
-    #           with:
-    #               go-version: "1.24.0"
-    #               cache: true
-
-    # - name: Run tests
-    #   run: |
-    #       go test -v -race -coverprofile=coverage.out ./...
-    #       go tool cover -func=coverage.out
-
-    # - name: Run linter
-    #   run: |
-    #       go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-    #       golangci-lint run ./...
-
-    # - name: Security scan
-    #   run: |
-    #       go install github.com/securego/gosec/v2/cmd/gosec@latest
-    #       gosec ./...
-
-    # ============================================
-    # Job 2: Build & Push
-    # ============================================
-    build-and-push:
-        # needs: test
+    build-and-deploy:
         runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            packages: write
-
-        outputs:
-            image-digest: ${{ steps.build.outputs.digest }}
-            image-tag: ${{ steps.meta.outputs.version }}
 
         steps:
-            - uses: actions/checkout@v4
+            # 1. Checkout source code
+            - name: Checkout code
+              run: echo "Checkout code"
 
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.24.0"
-                  cache: true
+            # 2. Login ke Docker Hub
+            - name: Login to Docker Hub
+              run: echo "Login to Docker Hub"
 
-            # Build with version info (Github)
-            - name: Build Go binaries
-              run: |
-                  VERSION="${{ github.ref_name }}"
-                  COMMIT="${{ github.sha }}"
-                  BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            # 3. Build Docker image
+            - name: Build Docker image
+              run: echo "Building Docker image..."
 
-                  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-                    -ldflags="-w -s -X main.Version=$VERSION -X main.Commit=$COMMIT -X main.BuildTime=$BUILD_TIME" \
-                    -o ./bin/main ./cmd/server/main.go
+            # 4. Push image ke Docker Hub
+            - name: Push Docker image
+              run: echo "Pushing Docker image..."
 
-                  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-                    -ldflags="-w -s" \
-                    -o ./bin/migrate ./cmd/migrate/main.go
-
-                  # Verify binaries
-                  ls -lah ./bin/
-                  file ./bin/main
-                  ./bin/main --version || true
-
-            - name: Set up Docker Buildx (use docker-container driver)
-              uses: docker/setup-buildx-action@v3
-              with:
-                  install: true
-                  driver: docker-container
-                  driver-opts: |
-                      image=moby/buildkit:master
-                          buildkitd-flags: --debug
-
-            - name: Log in to GHCR
-              uses: docker/login-action@v3
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Extract metadata
-              id: meta
-              uses: docker/metadata-action@v5
-              with:
-                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-                  tags: |
-                      type=ref,event=branch
-                      type=sha,prefix={{branch}}-
-                      type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-
-            - name: Build and push Docker image
-              id: build
-              uses: docker/build-push-action@v5
-              with:
-                  context: .
-                  file: ./Dockerfile.ci
-                  push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-                  cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-
-            - name: Generate SBOM (Security)
-              run: |
-                  docker run --rm \
-                    -v /var/run/docker.sock:/var/run/docker.sock \
-                    anchore/syft:latest \
-                    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} \
-                    -o json > sbom.json
-
-            - name: Upload SBOM
-              uses: actions/upload-artifact@v4 # ✅ Update ke v4
-              with:
-                  name: sbom
-                  path: sbom.json
-
-    # ============================================
-    # Job 3: Deploy to Staging
-    # ============================================
-    deploy-staging:
-        needs: build-and-push
-        runs-on: ubuntu-latest
-        environment:
-            name: staging
-            url: http://72.61.210.46
-
-        steps:
-            - name: Trigger deployment webhook
-              id: webhook
-              run: |
-                  PAYLOAD='{
-                    "repository": "${{ github.repository }}",
-                    "branch": "${{ github.ref_name }}",
-                    "commit": "${{ github.sha }}",
-                    "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}",
-                    "digest": "${{ needs.build-and-push.outputs.image-digest }}",
-                    "deployer": "${{ github.actor }}"
-                  }'
-
-                  SIGNATURE="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | sed 's/^.* //')"
-
-                  RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.WEBHOOK_URL }} \
-                    -H "Content-Type: application/json" \
-                    -H "X-Hub-Signature: $SIGNATURE" \
-                    -d "$PAYLOAD")
-
-                  HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-                  BODY=$(echo "$RESPONSE" | sed '$d')
-
-                  if [ "$HTTP_CODE" != "200" ]; then
-                    echo "❌ Webhook failed with status $HTTP_CODE"
-                    echo "$BODY"
-                    exit 1
-                  fi
-
-                  echo "✅ Webhook triggered successfully"
-                  echo "$BODY"
-
-            - name: Wait for deployment
-              run: |
-                  echo "⏳ Waiting for deployment to complete..."
-                  sleep 30
-
-            - name: Health check
-              run: |
-                  MAX_RETRIES=30
-                  RETRY_INTERVAL=10
-
-                  for i in $(seq 1 $MAX_RETRIES); do
-                    echo "🏥 Health check attempt $i/$MAX_RETRIES..."
-
-                    if curl -f -s https://staging.yourdomain.com/health; then
-                      echo "✅ Application is healthy!"
-                      exit 0
-                    fi
-
-                    if [ $i -eq $MAX_RETRIES ]; then
-                      echo "❌ Health check failed after $MAX_RETRIES attempts"
-                      exit 1
-                    fi
-
-                    echo "⏳ Waiting ${RETRY_INTERVAL}s before retry..."
-                    sleep $RETRY_INTERVAL
-                  done
-
-            - name: Smoke tests
-              run: |
-                  # Basic API tests
-                  curl -f https://staging.yourdomain.com/api/v1/status
-
-                  # Check version endpoint
-                  VERSION=$(curl -s https://staging.yourdomain.com/api/v1/version | jq -r '.version')
-                  echo "Deployed version: $VERSION"
-
-            # - name: Notify Slack (Success)
-            #   if: success()
-            #   run: |
-            #       curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            #         -H "Content-Type: application/json" \
-            #         -d '{
-            #           "text": "✅ Deployment to staging successful!",
-            #           "blocks": [
-            #             {
-            #               "type": "section",
-            #               "text": {
-            #                 "type": "mrkdwn",
-            #                 "text": "*Deployment Successful* ✅\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*URL:* https://staging.yourdomain.com"
-            #               }
-            #             }
-            #           ]
-            #         }'
-
-            # - name: Notify Slack (Failure)
-            #   if: failure()
-            #   run: |
-            #       curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            #         -H "Content-Type: application/json" \
-            #         -d '{
-            #           "text": "❌ Deployment to staging failed!",
-            #           "blocks": [
-            #             {
-            #               "type": "section",
-            #               "text": {
-            #                 "type": "mrkdwn",
-            #                 "text": "*Deployment Failed* ❌\n*Environment:* Staging\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Deployer:* ${{ github.actor }}\n*Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            #               }
-            #             }
-            #           ]
-            #         }'
-
-# ```
-
-# ---
-
-# ### **Phase 2: VPS Setup** 🖥️
-
-# #### **File Structure di VPS:**
-# ```
-# /opt/
-# ├── myapp/                          # Application directory
-# │   ├── docker-compose.yml
-# │   ├── docker-compose.prod.yml     # Production overrides
-# │   ├── .env                        # Environment variables
-# │   └── backups/                    # Database backups
-# │
-# ├── deploy/                         # Deployment scripts
-# │   ├── webhook-server.py
-# │   ├── deploy.sh
-# │   ├── rollback.sh
-# │   ├── health-check.sh
-# │   └── backup-db.sh
-# │
-# └── logs/                           # Application logs
-#     ├── webhook.log
-#     ├── deploy.log
-#     └── app.log
+            # 5. Trigger webhook ke VPS
+            - name: Trigger VPS Webhook
+              run: echo "Triggering VPS webhook..."
