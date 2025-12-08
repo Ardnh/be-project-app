@@ -8,5 +8,4 @@ import (
 
 func SetupHealthRoutes(app *fiber.App, handler *handlers.HealthHandler) {
 	app.Get("/health", handler.HealthCheck)
-	app.Get("/ready", handler.ReadinessCheck)
 }

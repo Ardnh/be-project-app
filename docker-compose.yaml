@@ -26,7 +26,7 @@ services:
             redis:
                 condition: service_healthy
         networks:
-            - app_network
+            - project-app-network
         restart: unless-stopped
 
     # PostgreSQL Database
@@ -42,12 +42,12 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U postgres -d project_app_db"] # ✅ Specify database
+            test: ["CMD-SHELL", "pg_isready -U root -d project_app_db"]
             interval: 10s
             timeout: 5s
             retries: 5
         networks:
-            - app_network
+            - project-app-network
         restart: unless-stopped
 
     # Redis Cache
@@ -63,12 +63,12 @@ services:
             timeout: 5s
             retries: 5
         networks:
-            - app_network
+            - project-app-network
         restart: unless-stopped
 
 # Networks
 networks:
-    app_network:
+    project-app-network:
         driver: bridge
 
 # Volumes
