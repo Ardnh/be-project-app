@@ -12,17 +12,17 @@ func NewHealthHandler() *HealthHandler {
 	return &HealthHandler{}
 }
 
-func (h *HealthHandler) HealthCheck(c *fiber.Ctx) error {
-	return c.JSON(dto.Success("Service is healthy", fiber.Map{
-		"status":  "UP",
-		"service": "project-app test",
-	}))
-}
-
 func (h *HealthHandler) ReadinessCheck(c *fiber.Ctx) error {
 	// TODO: Check database, redis, etc.
 	return c.JSON(dto.Success("Service is ready", fiber.Map{
 		"database": "connected",
 		"redis":    "connected",
+	}))
+}
+
+func (h *HealthHandler) HealthCheck(c *fiber.Ctx) error {
+	return c.JSON(dto.Success("Service is healthy", fiber.Map{
+		"status":  "UP",
+		"service": "project-app is healthy",
 	}))
 }
