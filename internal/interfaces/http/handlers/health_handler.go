@@ -23,6 +23,6 @@ func (h *HealthHandler) ReadinessCheck(c *fiber.Ctx) error {
 func (h *HealthHandler) HealthCheck(c *fiber.Ctx) error {
 	return c.JSON(dto.Success("Service is healthy", fiber.Map{
 		"status":  "UP",
-		"service": "project-app is healthy",
+		"service": "project-app is healthy & running",
 	}))
 }
