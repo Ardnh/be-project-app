@@ -54,7 +54,7 @@ func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx contex
 	result := r.db.WithContext(ctx).
 		Model(&entities.ProjectTodolistItems{}).
 		Where("id = ?", todoItem.ID).
-		Omit("created_at", "id").
+		Omit("created_at", "id", "project_todolist_id").
 		Updates(todoItem)
 
 	if result.Error != nil {
