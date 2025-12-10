@@ -121,11 +121,29 @@ func (r *projectsService) CreateProjects(ctx context.Context, project *dto.Creat
 
 func (r *projectsService) UpdateProjects(ctx context.Context, id string, project *dto.UpdateProjectDto) error {
 
+	var startDate *time.Time
+	if project.StartDate != "" {
+		parsed, err := time.Parse("2006-01-02", project.StartDate)
+		if err == nil {
+			startDate = &parsed
+		}
+	}
+
+	var endDate *time.Time
+	if project.EndDate != "" {
+		parsed, err := time.Parse("2006-01-02", project.EndDate)
+		if err == nil {
+			endDate = &parsed
+		}
+	}
+
 	projectEntities := &entities.Projects{
 		ID:           id,
 		UserID:       project.UserID,
 		Name:         project.Name,
 		Budget:       project.Budget,
+		StartDate:    startDate,
+		EndDate:      endDate,
 		CategoryName: project.CategoryName,
 		IsCompleted:  project.IsCompleted,
 	}
