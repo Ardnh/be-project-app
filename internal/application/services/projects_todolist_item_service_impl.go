@@ -40,12 +40,11 @@ func (r *projectTodolistItemService) CreateProjectsTodolistItem(ctx context.Cont
 func (r *projectTodolistItemService) UpdateProjectsTodolistItem(ctx context.Context, id string, todoItem *dto.UpdateProjectTodolistItemsDto) error {
 
 	req := &entities.ProjectTodolistItems{
-		ID:                todoItem.ID,
-		ProjectTodolistID: todoItem.ProjectTodolistID,
-		Name:              todoItem.Name,
-		CategoryName:      todoItem.CategoryName,
-		IsCompleted:       todoItem.IsCompleted,
-		UpdatedAt:         time.Now(),
+		ID:           todoItem.ID,
+		Name:         todoItem.Name,
+		CategoryName: todoItem.CategoryName,
+		IsCompleted:  todoItem.IsCompleted,
+		UpdatedAt:    time.Now(),
 	}
 
 	errCreate := r.repo.CreateProjectTodolistItem(ctx, req)

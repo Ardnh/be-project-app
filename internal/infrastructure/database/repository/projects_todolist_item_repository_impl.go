@@ -66,5 +66,25 @@ func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx contex
 
 func (r *projectTodolistItemRepositoryImpl) DeleteProjectTodolistItem(ctx context.Context, id string) error {
 
+	// Validasi
+	if id == "" {
+		return errors.New("project ID is required")
+	}
+
+	// Cek apakah record ada
+	var exists bool
+	if err := r.db.WithContext(ctx).
+		Model(&entities.ProjectTodolistItems{}).
+		Select("1").
+		Where("id = ?", id).
+		Limit(1).
+		Find(&exists).Error; err != nil {
+		return fmt.Errorf("failed to check project existence: %w", err)
+	}
+
+	if !exists {
+		return gorm.ErrRecordNotFound
+	}
+
 	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.ProjectTodolistItems{}).Error
 }
