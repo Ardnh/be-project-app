@@ -22,16 +22,11 @@ func NewProjectTodolistItemService(repo repositories.ProjectTodolistItemReposito
 
 func (r *projectTodolistItemService) CreateProjectsTodolistItem(ctx context.Context, todoItem *dto.CreateProjectTodolistItemsDto) error {
 
-	isCompleted := false
-	if todoItem.IsCompleted != nil {
-		isCompleted = *todoItem.IsCompleted
-	}
-
 	req := &entities.ProjectTodolistItems{
 		ProjectTodolistID: todoItem.ProjectTodolistID,
 		Name:              todoItem.Name,
 		CategoryName:      todoItem.CategoryName,
-		IsCompleted:       isCompleted,
+		IsCompleted:       todoItem.IsCompleted,
 	}
 
 	errCreate := r.repo.CreateProjectTodolistItem(ctx, req)
@@ -44,17 +39,12 @@ func (r *projectTodolistItemService) CreateProjectsTodolistItem(ctx context.Cont
 
 func (r *projectTodolistItemService) UpdateProjectsTodolistItem(ctx context.Context, id string, todoItem *dto.UpdateProjectTodolistItemsDto) error {
 
-	isCompleted := false
-	if todoItem.IsCompleted != nil {
-		isCompleted = *todoItem.IsCompleted
-	}
-
 	req := &entities.ProjectTodolistItems{
 		ID:                todoItem.ID,
 		ProjectTodolistID: todoItem.ProjectTodolistID,
 		Name:              todoItem.Name,
 		CategoryName:      todoItem.CategoryName,
-		IsCompleted:       isCompleted,
+		IsCompleted:       todoItem.IsCompleted,
 		UpdatedAt:         time.Now(),
 	}
 
