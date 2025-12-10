@@ -120,7 +120,7 @@ func (r *projectsRepositoryImpl) FindProjectSummaryByUserID(ctx context.Context,
 		return nil, fmt.Errorf("failed to find projects by user: %w", err)
 	}
 
-	return &projects, nil // ← Return slice langsung, bukan pointer
+	return &projects, nil
 }
 
 func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Projects) error {

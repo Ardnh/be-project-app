@@ -68,5 +68,5 @@ func (r *projectTodolistItemService) UpdateProjectsTodolistItem(ctx context.Cont
 
 func (r *projectTodolistItemService) DeleteProjectsTodolistItem(ctx context.Context, id string) error {
 
-	return r.DeleteProjectsTodolistItem(ctx, id)
+	return r.repo.DeleteProjectTodolistItem(ctx, id)
 }
