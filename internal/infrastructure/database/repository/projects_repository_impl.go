@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
@@ -124,7 +125,17 @@ func (r *projectsRepositoryImpl) FindProjectSummaryByUserID(ctx context.Context,
 }
 
 func (r *projectsRepositoryImpl) Create(ctx context.Context, project *entities.Projects) error {
-	return r.db.WithContext(ctx).Create(project).Error
+
+	cacheKey := fmt.Sprintf("user_categories:%s", project.UserID)
+	if err := r.db.WithContext(ctx).Create(project).Error; err != nil {
+		return err
+	}
+
+	if err := r.redis.Del(ctx, cacheKey).Err(); err != nil {
+		log.Printf("failed to delete cache %s: %v", cacheKey, err)
+	}
+
+	return nil
 }
 
 func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId string) (*entities.Projects, error) {
