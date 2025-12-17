@@ -324,10 +324,42 @@ func (r *projectsRepositoryImpl) Update(ctx context.Context, project *entities.P
 		return gorm.ErrRecordNotFound
 	}
 
+	cacheKey := fmt.Sprintf("user_categories:%s", project.UserID)
+	if err := r.db.WithContext(ctx).Create(project).Error; err != nil {
+		return err
+	}
+
+	if err := r.redis.Del(ctx, cacheKey).Err(); err != nil {
+		log.Printf("failed to delete cache %s: %v", cacheKey, err)
+	}
+
 	return nil
 }
 
 func (r *projectsRepositoryImpl) Delete(ctx context.Context, id string) error {
 
-	return r.db.WithContext(ctx).Where("id=?", id).Delete(&entities.Projects{}).Error
+	var project entities.Projects
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&project).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("project not found")
+		}
+		return fmt.Errorf("failed to find project: %w", err)
+	}
+
+	result := r.db.WithContext(ctx).Where("id=?", id).Delete(&entities.Projects{})
+
+	if result.RowsAffected == 0 {
+		return errors.New("no project was deleted")
+	}
+
+	cacheKey := fmt.Sprintf("user_categories:%s", project.UserID)
+	if err := r.db.WithContext(ctx).Create(project).Error; err != nil {
+		return err
+	}
+
+	if err := r.redis.Del(ctx, cacheKey).Err(); err != nil {
+		log.Printf("failed to delete cache %s: %v", cacheKey, err)
+	}
+
+	return nil
 }
