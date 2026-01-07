@@ -57,7 +57,7 @@ func (r *projectTodolistItemService) UpdateProjectsTodolistItem(ctx context.Cont
 		UpdatedAt:    time.Now(),
 	}
 
-	errCreate := r.repo.CreateProjectTodolistItem(ctx, req)
+	errCreate := r.repo.UpdateProjectTodolistItem(ctx, req)
 	if errCreate != nil {
 		return errCreate
 	}
