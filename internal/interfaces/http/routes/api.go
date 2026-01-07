@@ -5,10 +5,12 @@ import (
 	"github.com/Ardnh/be-project-app/internal/interfaces/http/handlers"
 	"github.com/Ardnh/be-project-app/internal/interfaces/http/middlewares"
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 )
 
 func SetupAPIRoutes(
 	app *fiber.App,
+	log *logrus.Logger,
 	userHandler *handlers.UserHandler,
 	projectHandler *handlers.ProjectsHandler,
 	projectExpensesHandler *handlers.ProjectsExpensesHandler,

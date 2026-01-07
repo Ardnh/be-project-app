@@ -14,10 +14,18 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/Ardnh/be-project-app/internal/config"
+	"github.com/Ardnh/be-project-app/internal/interfaces/http/middlewares"
+	"github.com/Ardnh/be-project-app/internal/utils/logger"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
+
+	// Logger
+	logApp := logger.New()
+
+	fmt.Println("🔥 STDOUT TEST")
+	logApp.Info("🔥 LOGRUS TEST")
 
 	// Load config
 	cfg := config.LoadConfig()
@@ -35,6 +43,9 @@ func main() {
 	// TODO: Setup routes, handlers, etc.
 	app := fiber.New()
 	validator := validator.New()
+
+	// Logger
+	app.Use(middlewares.Logger(logApp))
 
 	// Repository | interface -> infrastructure -> database -> repository
 	userRepository := repository.NewUserRepository(db, redisDb)
@@ -66,6 +77,7 @@ func main() {
 	// Setup Routes
 	routes.SetupAPIRoutes(
 		app,
+		logApp,
 		userHandler,
 		projectsHandler,
 		projectsExpensesHandler,
