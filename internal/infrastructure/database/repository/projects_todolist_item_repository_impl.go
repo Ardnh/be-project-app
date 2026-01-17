@@ -29,7 +29,6 @@ func (r *projectTodolistItemRepositoryImpl) CreateProjectTodolistItem(ctx contex
 }
 
 func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx context.Context, todoItem *entities.ProjectTodolistItems) error {
-
 	// Validasi
 	if todoItem.ID == "" {
 		return errors.New("project ID is required")
@@ -45,22 +44,26 @@ func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx contex
 		Find(&exists).Error; err != nil {
 		return fmt.Errorf("failed to check project existence: %w", err)
 	}
-
 	if !exists {
 		return gorm.ErrRecordNotFound
 	}
 
-	// Update dengan Omit timestamp fields
+	// Buat map untuk update (map tidak skip zero values)
+	updates := map[string]interface{}{
+		"name":          todoItem.Name,
+		"category_name": todoItem.CategoryName,
+		"is_completed":  todoItem.IsCompleted,
+		"updated_at":    time.Now(),
+	}
+
 	result := r.db.WithContext(ctx).
 		Model(&entities.ProjectTodolistItems{}).
 		Where("id = ?", todoItem.ID).
-		Omit("created_at", "id", "project_todolist_id").
-		Updates(todoItem)
+		Updates(updates)
 
 	if result.Error != nil {
 		return fmt.Errorf("failed to update project: %w", result.Error)
 	}
-
 	return nil
 }
 
