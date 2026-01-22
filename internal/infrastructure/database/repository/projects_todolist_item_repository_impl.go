@@ -30,15 +30,7 @@ func (r *projectTodolistItemRepositoryImpl) CreateProjectTodolistItem(ctx contex
 		return nil, err
 	}
 
-	// Fetch the created item to get all fields including auto-generated ones
-	var createdItem entities.ProjectTodolistItems
-	if err := r.db.WithContext(ctx).
-		Where("id = ?", todoItem.ID).
-		First(&createdItem).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch created item: %w", err)
-	}
-
-	return &createdItem, nil
+	return todoItem, nil
 }
 
 func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx context.Context, todoItem *entities.ProjectTodolistItems) (*entities.ProjectTodolistItems, error) {

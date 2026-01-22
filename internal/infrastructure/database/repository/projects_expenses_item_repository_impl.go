@@ -21,15 +21,16 @@ func NewProjectExpensesItemRepository(db *gorm.DB, redis *redis.Client) reposito
 	}
 }
 
-func (r *ProjectExpensesItemRepository) Create(ctx context.Context, expenses *entities.ProjectExpenseItems) error {
-	return r.db.
-		WithContext(ctx).
-		Model(&entities.ProjectExpenseItems{}).
-		Create(&expenses).
-		Error
+func (r *ProjectExpensesItemRepository) Create(ctx context.Context, expensesItem *entities.ProjectExpenseItems) (*entities.ProjectExpenseItems, error) {
+
+	if err := r.db.WithContext(ctx).Model(&entities.ProjectExpenseItems{}).Create(&expensesItem).Error; err != nil {
+		return nil, err
+	}
+
+	return expensesItem, nil
 }
 
-func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *entities.ProjectExpenseItems) error {
+func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *entities.ProjectExpenseItems) (*entities.ProjectExpenseItems, error) {
 
 	result := r.db.
 		WithContext(ctx).
@@ -38,14 +39,21 @@ func (r *ProjectExpensesItemRepository) Update(ctx context.Context, expenses *en
 		Updates(&expenses)
 
 	if result.Error != nil {
-		return result.Error
+		return nil, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return nil, gorm.ErrRecordNotFound
 	}
 
-	return nil
+	var updatedExpense entities.ProjectExpenseItems
+	if err := r.db.WithContext(ctx).
+		Where("id = ?", expenses.ID).
+		First(&updatedExpense).Error; err != nil {
+		return nil, err
+	}
+
+	return &updatedExpense, nil
 }
 
 func (r *ProjectExpensesItemRepository) Delete(ctx context.Context, id string) error {
