@@ -41,7 +41,7 @@ func (r *projectTodolistItemService) CreateProjectsTodolistItem(ctx context.Cont
 		return nil, errCreate
 	}
 
-	todoItemDto := mapper.ToProjectTodolistItemDTO(newTodo)
+	todoItemDto := mapper.ToProjectTodolistItemDTO(*newTodo)
 	if todoItemDto == nil {
 		return nil, errors.New("Failed to convert todo item to DTO")
 	}
@@ -69,7 +69,7 @@ func (r *projectTodolistItemService) UpdateProjectsTodolistItem(ctx context.Cont
 		return nil, errUpdate
 	}
 
-	todoItemDto := mapper.ToProjectTodolistItemDTO(updatedTodoItem)
+	todoItemDto := mapper.ToProjectTodolistItemDTO(*updatedTodoItem)
 	if todoItemDto == nil {
 		return nil, errors.New("Failed to convert todo item to DTO")
 	}
