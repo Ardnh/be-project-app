@@ -41,14 +41,14 @@ func (h *ProjectTodolistItemHandler) Create(c *fiber.Ctx) error {
 
 	log.Printf("[DEBUG] Validation passed, creating item")
 
-	err := h.service.CreateProjectsTodolistItem(c.Context(), &req)
+	newTodoItem, err := h.service.CreateProjectsTodolistItem(c.Context(), &req)
 	if err != nil {
 		log.Printf("[ERROR] Failed to create item: %v, Request: %+v", err, req)
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
 	log.Printf("[INFO] Todolist item created successfully - Name: %s, ProjectTodolistId: %s", req.Name, req.ProjectTodolistID)
-	return http.SuccessResponse(c, fiber.StatusOK, "Project todolist item created", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project todolist item created", newTodoItem)
 }
 
 func (h *ProjectTodolistItemHandler) Update(c *fiber.Ctx) error {
@@ -79,14 +79,14 @@ func (h *ProjectTodolistItemHandler) Update(c *fiber.Ctx) error {
 
 	log.Printf("[DEBUG] Validation passed for ID %s, updating item", id)
 
-	err := h.service.UpdateProjectsTodolistItem(c.Context(), id, &req)
+	updatedTodoItem, err := h.service.UpdateProjectsTodolistItem(c.Context(), id, &req)
 	if err != nil {
 		log.Printf("[ERROR] Failed to update item %s: %v, Request: %+v", id, err, req)
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
 	log.Printf("[INFO] Todolist item updated successfully - ID: %s, Name: %s, IsCompleted: %v", id, req.Name, req.IsCompleted)
-	return http.SuccessResponse(c, fiber.StatusOK, "Project todolist item updated", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project todolist item updated", updatedTodoItem)
 }
 
 func (h *ProjectTodolistItemHandler) Delete(c *fiber.Ctx) error {

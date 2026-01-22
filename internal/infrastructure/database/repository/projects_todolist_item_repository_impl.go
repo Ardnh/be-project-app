@@ -24,15 +24,27 @@ func NewProjectTodolistItemRepository(db *gorm.DB, redis *redis.Client) reposito
 	}
 }
 
-func (r *projectTodolistItemRepositoryImpl) CreateProjectTodolistItem(ctx context.Context, todoItem *entities.ProjectTodolistItems) error {
+func (r *projectTodolistItemRepositoryImpl) CreateProjectTodolistItem(ctx context.Context, todoItem *entities.ProjectTodolistItems) (*entities.ProjectTodolistItems, error) {
+	// Create the item
+	if err := r.db.WithContext(ctx).Model(&entities.ProjectTodolistItems{}).Create(&todoItem).Error; err != nil {
+		return nil, err
+	}
 
-	return r.db.WithContext(ctx).Model(&entities.ProjectTodolistItems{}).Create(&todoItem).Error
+	// Fetch the created item to get all fields including auto-generated ones
+	var createdItem entities.ProjectTodolistItems
+	if err := r.db.WithContext(ctx).
+		Where("id = ?", todoItem.ID).
+		First(&createdItem).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch created item: %w", err)
+	}
+
+	return &createdItem, nil
 }
 
-func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx context.Context, todoItem *entities.ProjectTodolistItems) error {
+func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx context.Context, todoItem *entities.ProjectTodolistItems) (*entities.ProjectTodolistItems, error) {
 	// Validasi
 	if todoItem.ID == "" {
-		return errors.New("project ID is required")
+		return nil, errors.New("project ID is required")
 	}
 
 	// Cek apakah record ada
@@ -43,10 +55,11 @@ func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx contex
 		Where("id = ?", todoItem.ID).
 		Limit(1).
 		Find(&exists).Error; err != nil {
-		return fmt.Errorf("failed to check project existence: %w", err)
+		return nil, fmt.Errorf("failed to check project existence: %w", err)
 	}
+
 	if !exists {
-		return gorm.ErrRecordNotFound
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	// Buat map untuk update (map tidak skip zero values)
@@ -63,9 +76,18 @@ func (r *projectTodolistItemRepositoryImpl) UpdateProjectTodolistItem(ctx contex
 		Updates(updates)
 
 	if result.Error != nil {
-		return fmt.Errorf("failed to update project: %w", result.Error)
+		return nil, fmt.Errorf("failed to update project: %w", result.Error)
 	}
-	return nil
+
+	// Fetch the updated item to return the latest data
+	var updatedItem entities.ProjectTodolistItems
+	if err := r.db.WithContext(ctx).
+		Where("id = ?", todoItem.ID).
+		First(&updatedItem).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch updated item: %w", err)
+	}
+
+	return &updatedItem, nil
 }
 
 func (r *projectTodolistItemRepositoryImpl) DeleteProjectTodolistItem(ctx context.Context, id string) error {
