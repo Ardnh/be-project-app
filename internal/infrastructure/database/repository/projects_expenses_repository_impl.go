@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
@@ -24,10 +25,29 @@ func NewProjectsExpensesRepository(db *gorm.DB, redis *redis.Client) repositorie
 	}
 }
 
-func (r *projectsExpensesRepositoryImpl) Create(ctx context.Context, expenses *entities.ProjectExpenses) error {
-	return r.db.WithContext(ctx).Create(expenses).Error
+func (r *projectsExpensesRepositoryImpl) Create(ctx context.Context, expenses *entities.ProjectExpenses) (*entities.ProjectExpenses, error) {
+
+	if err := r.db.WithContext(ctx).Create(&expenses).Error; err != nil {
+		return nil, err
+	}
+
+	return expenses, nil
 }
-func (r *projectsExpensesRepositoryImpl) Update(ctx context.Context, expenses *entities.ProjectExpenses) error {
+func (r *projectsExpensesRepositoryImpl) Update(ctx context.Context, expenses *entities.ProjectExpenses) (*entities.ProjectExpenses, error) {
+
+	var exists bool
+	if err := r.db.WithContext(ctx).
+		Model(&entities.ProjectExpenses{}).
+		Select("1").
+		Where("id = ?", expenses.ID).
+		Limit(1).
+		Find(&exists).Error; err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		return nil, gorm.ErrRecordNotFound
+	}
 
 	result := r.db.
 		WithContext(ctx).
@@ -36,14 +56,21 @@ func (r *projectsExpensesRepositoryImpl) Update(ctx context.Context, expenses *e
 		Updates(expenses)
 
 	if result.Error != nil {
-		return result.Error
+		return nil, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return nil, gorm.ErrRecordNotFound
 	}
 
-	return nil
+	var updatedExpenses entities.ProjectExpenses
+	if err := r.db.WithContext(ctx).
+		Where("id = ?", expenses.ID).
+		First(&updatedExpenses).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch updated item: %w", err)
+	}
+
+	return &updatedExpenses, nil
 }
 
 func (r *projectsExpensesRepositoryImpl) Delete(ctx context.Context, id string) error {

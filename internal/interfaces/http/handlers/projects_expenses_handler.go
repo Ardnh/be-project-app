@@ -38,12 +38,12 @@ func (h *ProjectsExpensesHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.projectsExpensesService.CreateProjectsExpenses(c.Context(), &req)
+	createdExpenseDto, err := h.projectsExpensesService.CreateProjectsExpenses(c.Context(), &req)
 	if err != nil {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusCreated, "Project expenses created", nil)
+	return http.SuccessResponse(c, fiber.StatusCreated, "Project expenses created", createdExpenseDto)
 }
 
 func (h *ProjectsExpensesHandler) Update(c *fiber.Ctx) error {
@@ -67,12 +67,12 @@ func (h *ProjectsExpensesHandler) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.projectsExpensesService.UpdateProjectsExpenses(c.Context(), id, &req)
+	updatedExpenseDto, err := h.projectsExpensesService.UpdateProjectsExpenses(c.Context(), id, &req)
 	if err != nil {
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
 	}
 
-	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses updated", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses updated", updatedExpenseDto)
 }
 
 func (h *ProjectsExpensesHandler) Delete(c *fiber.Ctx) error {

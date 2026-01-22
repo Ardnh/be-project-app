@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Ardnh/be-project-app/internal/application/dto"
+	"github.com/Ardnh/be-project-app/internal/application/mapper"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
 	"github.com/Ardnh/be-project-app/internal/domain/services"
@@ -19,34 +21,44 @@ func NewProjectExpensesService(repo repositories.ProjectsExpensesRepository) ser
 	}
 }
 
-func (s *projectExpensesService) CreateProjectsExpenses(ctx context.Context, expenses *dto.CreateProjectsExpensesDto) error {
+func (s *projectExpensesService) CreateProjectsExpenses(ctx context.Context, expenses *dto.CreateProjectsExpensesDto) (*dto.ProjectsExpensesDto, error) {
 
 	req := &entities.ProjectExpenses{
 		ProjectID: expenses.ProjectID,
 		Name:      expenses.Name,
 	}
 
-	err := s.projectsExpensesRepo.Create(ctx, req)
+	createdExpenses, err := s.projectsExpensesRepo.Create(ctx, req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	createdExpensesDto := mapper.ToProjectExpensesDTO(createdExpenses)
+	if createdExpenses == nil {
+		return nil, errors.New("Failed to convert expenses to DTO")
+	}
+
+	return createdExpensesDto, nil
 }
 
-func (s *projectExpensesService) UpdateProjectsExpenses(ctx context.Context, id string, expenses *dto.UpdateProjectsExpensesDto) error {
+func (s *projectExpensesService) UpdateProjectsExpenses(ctx context.Context, id string, expenses *dto.UpdateProjectsExpensesDto) (*dto.ProjectsExpensesDto, error) {
 
 	req := &entities.ProjectExpenses{
 		ID:   id,
 		Name: expenses.Name,
 	}
 
-	err := s.projectsExpensesRepo.Update(ctx, req)
+	updatedExpense, err := s.projectsExpensesRepo.Update(ctx, req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	updatedExpenseDto := mapper.ToProjectExpensesDTO(updatedExpense)
+	if updatedExpense == nil {
+		return nil, errors.New("Failed to convert expenses to DTO")
+	}
+
+	return updatedExpenseDto, nil
 }
 
 func (s *projectExpensesService) DeleteProjectsExpenses(ctx context.Context, id string) error {

@@ -7,7 +7,7 @@ import (
 )
 
 type ProjectsExpensesRepository interface {
-	Create(ctx context.Context, expenses *entities.ProjectExpenses) error
-	Update(ctx context.Context, expenses *entities.ProjectExpenses) error
+	Create(ctx context.Context, expenses *entities.ProjectExpenses) (*entities.ProjectExpenses, error)
+	Update(ctx context.Context, expenses *entities.ProjectExpenses) (*entities.ProjectExpenses, error)
 	Delete(ctx context.Context, id string) error
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type ProjectsExpensesService interface {
-	CreateProjectsExpenses(ctx context.Context, expenses *dto.CreateProjectsExpensesDto) error
-	UpdateProjectsExpenses(ctx context.Context, id string, user *dto.UpdateProjectsExpensesDto) error
+	CreateProjectsExpenses(ctx context.Context, expenses *dto.CreateProjectsExpensesDto) (*dto.ProjectsExpensesDto, error)
+	UpdateProjectsExpenses(ctx context.Context, id string, user *dto.UpdateProjectsExpensesDto) (*dto.ProjectsExpensesDto, error)
 	DeleteProjectsExpenses(ctx context.Context, id string) error
 }
