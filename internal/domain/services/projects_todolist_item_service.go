@@ -7,7 +7,7 @@ import (
 )
 
 type ProjectTodolistItemService interface {
-	CreateProjectsTodolistItem(ctx context.Context, todoItem *dto.CreateProjectTodolistItemsDto) error
-	UpdateProjectsTodolistItem(ctx context.Context, id string, user *dto.UpdateProjectTodolistItemsDto) error
+	CreateProjectsTodolistItem(ctx context.Context, todoItem *dto.CreateProjectTodolistItemsDto) (*dto.ProjectTodolistItemsDto, error)
+	UpdateProjectsTodolistItem(ctx context.Context, id string, todoItem *dto.UpdateProjectTodolistItemsDto) (*dto.ProjectTodolistItemsDto, error)
 	DeleteProjectsTodolistItem(ctx context.Context, id string) error
 }

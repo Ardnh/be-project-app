@@ -179,13 +179,13 @@ func ToProjectTodolistDTO(todolist *entities.ProjectTodolists) *dto.ProjectTodol
 	}
 }
 
-func ToProjectTodolistItemDTO(expensesItem entities.ProjectTodolistItems) *dto.ProjectTodolistItemsDto {
+func ToProjectTodolistItemDTO(todoItem *entities.ProjectTodolistItems) *dto.ProjectTodolistItemsDto {
 	return &dto.ProjectTodolistItemsDto{
-		ID:                expensesItem.ID,
-		ProjectTodolistID: expensesItem.ProjectTodolistID,
-		Name:              expensesItem.Name,
-		CategoryName:      expensesItem.CategoryName,
-		IsCompleted:       expensesItem.IsCompleted,
+		ID:                todoItem.ID,
+		ProjectTodolistID: todoItem.ProjectTodolistID,
+		Name:              todoItem.Name,
+		CategoryName:      todoItem.CategoryName,
+		IsCompleted:       todoItem.IsCompleted,
 	}
 }
 
