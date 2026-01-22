@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/Ardnh/be-project-app/internal/application/dto"
+	"github.com/Ardnh/be-project-app/internal/application/mapper"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	"github.com/Ardnh/be-project-app/internal/domain/repositories"
 	"github.com/Ardnh/be-project-app/internal/domain/services"
@@ -20,7 +22,7 @@ func NewProjectExpensesItemService(repo repositories.ProjectExpensesItemReposito
 	}
 }
 
-func (r *projectExpensesItemService) CreateProjectsExpensesItem(ctx context.Context, expensesItem *dto.CreateProjectExpensesItemDto) error {
+func (r *projectExpensesItemService) CreateProjectsExpensesItem(ctx context.Context, expensesItem *dto.CreateProjectExpensesItemDto) (*dto.ProjectExpensesItemDto, error) {
 
 	req := entities.ProjectExpenseItems{
 		ProjectExpenseID: expensesItem.ProjectExpensesId,
@@ -29,16 +31,20 @@ func (r *projectExpensesItemService) CreateProjectsExpensesItem(ctx context.Cont
 		CategoryName:     expensesItem.CategoryName,
 	}
 
-	err := r.repo.Create(ctx, &req)
-
+	createdItem, err := r.repo.Create(ctx, &req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	expenseItemDto := mapper.ToProjectExpensesItemDTO(*createdItem)
+	if expenseItemDto == nil {
+		return nil, errors.New("Failed to convert expense item to DTO")
+	}
+
+	return expenseItemDto, nil
 }
 
-func (r *projectExpensesItemService) UpdateProjectsExpensesItem(ctx context.Context, id string, expensesItem *dto.UpdateProjectExpensesItemDto) error {
+func (r *projectExpensesItemService) UpdateProjectsExpensesItem(ctx context.Context, id string, expensesItem *dto.UpdateProjectExpensesItemDto) (*dto.ProjectExpensesItemDto, error) {
 
 	req := entities.ProjectExpenseItems{
 		ID:               id,
@@ -49,13 +55,17 @@ func (r *projectExpensesItemService) UpdateProjectsExpensesItem(ctx context.Cont
 		UpdatedAt:        time.Now(),
 	}
 
-	err := r.repo.Update(ctx, &req)
-
+	updatedItem, err := r.repo.Update(ctx, &req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	expenseItemDto := mapper.ToProjectExpensesItemDTO(*updatedItem)
+	if expenseItemDto == nil {
+		return nil, errors.New("Failed to convert expense item to DTO")
+	}
+
+	return expenseItemDto, nil
 }
 
 func (r *projectExpensesItemService) DeleteProjectsExpensesItem(ctx context.Context, id string) error {

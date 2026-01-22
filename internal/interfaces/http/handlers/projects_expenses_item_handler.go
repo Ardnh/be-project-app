@@ -43,7 +43,7 @@ func (h *ProjectsExpensesItemHandler) Create(c *fiber.Ctx) error {
 
 	log.Printf("[DEBUG] Validation passed, calling service layer")
 
-	err := h.projectsService.CreateProjectsExpensesItem(c.Context(), &req)
+	createdItem, err := h.projectsService.CreateProjectsExpensesItem(c.Context(), &req)
 	if err != nil {
 		log.Printf("[ERROR] Failed to create expenses item: %v, Request: %+v", err, req)
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
@@ -51,7 +51,7 @@ func (h *ProjectsExpensesItemHandler) Create(c *fiber.Ctx) error {
 
 	log.Printf("[INFO] Project expenses item created successfully - ProjectExpensesId: %s, Name: %s, Amount: %f",
 		req.ProjectExpensesId, req.Name, req.Amount)
-	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item created", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item created", createdItem)
 }
 
 func (h *ProjectsExpensesItemHandler) Update(c *fiber.Ctx) error {
@@ -85,7 +85,7 @@ func (h *ProjectsExpensesItemHandler) Update(c *fiber.Ctx) error {
 
 	log.Printf("[DEBUG] Validation passed for expenses item %s, calling service layer", id)
 
-	err := h.projectsService.UpdateProjectsExpensesItem(c.Context(), id, &req)
+	updatedItem, err := h.projectsService.UpdateProjectsExpensesItem(c.Context(), id, &req)
 	if err != nil {
 		log.Printf("[ERROR] Failed to update expenses item %s: %v, Request: %+v", id, err, req)
 		return http.ErrorResponse(c, fiber.ErrInternalServerError.Code, err.Error(), nil)
@@ -93,7 +93,7 @@ func (h *ProjectsExpensesItemHandler) Update(c *fiber.Ctx) error {
 
 	log.Printf("[INFO] Project expenses item updated successfully - ID: %s, Name: %s, Amount: %f",
 		id, req.Name, req.Amount)
-	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item updated", nil)
+	return http.SuccessResponse(c, fiber.StatusOK, "Project expenses item updated", updatedItem)
 }
 
 func (h *ProjectsExpensesItemHandler) Delete(c *fiber.Ctx) error {
