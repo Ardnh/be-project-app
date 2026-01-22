@@ -179,7 +179,7 @@ func ToProjectTodolistDTO(todolist *entities.ProjectTodolists) *dto.ProjectTodol
 	}
 }
 
-func ToProjectTodolistItemDTO(todoItem *entities.ProjectTodolistItems) *dto.ProjectTodolistItemsDto {
+func ToProjectTodolistItemDTO(todoItem entities.ProjectTodolistItems) *dto.ProjectTodolistItemsDto {
 	return &dto.ProjectTodolistItemsDto{
 		ID:                todoItem.ID,
 		ProjectTodolistID: todoItem.ProjectTodolistID,
