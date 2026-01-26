@@ -74,7 +74,7 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	// Search filter
 	if params.Search != "" {
 		searchPattern := "%" + params.Search + "%"
-		query = query.Where("p.name LIKE ? OR p.category_name LIKE ?", searchPattern, searchPattern)
+		query = query.Where("p.name ILIKE ? OR p.category_name ILIKE ?", searchPattern, searchPattern)
 	}
 
 	// Sorting

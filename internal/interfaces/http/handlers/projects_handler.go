@@ -109,7 +109,7 @@ func (h *ProjectsHandler) GetProjectsByUserId(c *fiber.Ctx) error {
 		sortBy = "created_at"
 	}
 
-	projectName := c.Query("search", "")
+	projectName := strings.TrimSpace(strings.ToLower(c.Query("search", "")))
 
 	params := dto.GetProjectsParams{
 		UserID:    userId,
