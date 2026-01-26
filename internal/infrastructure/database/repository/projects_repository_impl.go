@@ -337,7 +337,7 @@ func (r *projectsRepositoryImpl) Update(ctx context.Context, project *entities.P
 }
 
 func (r *projectsRepositoryImpl) Delete(ctx context.Context, id string) error {
-
+	// 1. Ambil project dulu untuk dapatkan UserID
 	var project entities.Projects
 	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&project).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -346,19 +346,29 @@ func (r *projectsRepositoryImpl) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to find project: %w", err)
 	}
 
-	result := r.db.WithContext(ctx).Where("id=?", id).Delete(&entities.Projects{})
-
+	// 2. Delete project dari database
+	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.Projects{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete project: %w", result.Error)
+	}
 	if result.RowsAffected == 0 {
 		return errors.New("no project was deleted")
 	}
 
+	// 3. Hapus cache Redis
 	cacheKey := fmt.Sprintf("user_categories:%s", project.UserID)
-	if err := r.db.WithContext(ctx).Create(project).Error; err != nil {
-		return err
-	}
 
-	if err := r.redis.Del(ctx, cacheKey).Err(); err != nil {
-		log.Printf("failed to delete cache %s: %v", cacheKey, err)
+	// Log untuk debug
+	log.Printf("Deleting cache for UserID: %s, Key: %s", project.UserID, cacheKey)
+
+	deletedCount, err := r.redis.Del(ctx, cacheKey).Result()
+	if err != nil {
+		log.Printf("Failed to delete cache %s: %v", cacheKey, err)
+	} else {
+		log.Printf("Successfully deleted %d cache key(s): %s", deletedCount, cacheKey)
+		if deletedCount == 0 {
+			log.Printf("Warning: Cache key %s not found in Redis", cacheKey)
+		}
 	}
 
 	return nil
