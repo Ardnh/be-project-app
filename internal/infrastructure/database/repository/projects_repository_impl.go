@@ -36,40 +36,41 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	query := r.db.WithContext(ctx).
 		Table("projects p").
 		Select(`
-            p.id as project_id,
-            p.user_id,
-            p.name,
-            p.budget,
-            p.is_completed,
-            p.category_name,
-            p.start_date,
-            p.end_date,
-            p.created_at,
-            COUNT(DISTINCT pt.id) as total_todolist,
-            COUNT(CASE WHEN pti.is_completed THEN 1 END) as total_todolist_item_done,
-            COUNT(pti.id) as total_todolist_item,
-            COUNT(DISTINCT pe.id) as total_expenses,
-            CASE
-				WHEN count(pti.id) = 0 then 0
-				ELSE
-					COUNT(case when pti.is_completed = true then 1 end)::float / COUNT(pti.id)
-			END as completion_percentage
+	        p.id as project_id,
+	        p.user_id,
+	        p.name,
+	        p.budget,
+	        p.is_completed,
+	        p.category_name,
+	        p.start_date,
+	        p.end_date,
+	        p.created_at,
+	        COUNT(DISTINCT CASE WHEN pt.id IS NOT NULL THEN pt.id END) as total_todolist,
+	        COUNT(CASE WHEN pti.is_completed = true THEN 1 END) as total_todolist_item_done,
+	        COUNT(CASE WHEN pti.id IS NOT NULL THEN 1 END) as total_todolist_item,
+	        COUNT(DISTINCT CASE WHEN pe.id IS NOT NULL THEN pe.id END) as total_expenses,
+	        CASE
+	            WHEN COUNT(CASE WHEN pti.id IS NOT NULL THEN 1 END) = 0 THEN 0
+	            ELSE
+	                COUNT(CASE WHEN pti.is_completed = true THEN 1 END)::float /
+	                COUNT(CASE WHEN pti.id IS NOT NULL THEN 1 END)
+	        END as completion_percentage
         `).
 		Joins("LEFT JOIN project_todolists pt ON p.id = pt.project_id").
 		Joins("LEFT JOIN project_todolist_items pti ON pt.id = pti.project_todolist_id").
 		Joins("LEFT JOIN project_expenses pe ON p.id = pe.project_id").
 		Where("p.user_id = ?", userId).
 		Group(`
-            p.id,
-            p.user_id,
-            p.name,
-            p.budget,
-            p.is_completed,
-            p.category_name,
-            p.start_date,
-            p.end_date,
-            p.created_at
-        `)
+	        p.id,
+	        p.user_id,
+	        p.name,
+	        p.budget,
+	        p.is_completed,
+	        p.category_name,
+	        p.start_date,
+	        p.end_date,
+	        p.created_at
+	    `)
 
 	// Search filter
 	if params.Search != "" {
@@ -225,7 +226,6 @@ func (r *projectsRepositoryImpl) FindByProjectId(ctx context.Context, projectId 
 	return &project, nil
 }
 
-// Ubah return type ke []string (lebih idiomatic)
 func (r *projectsRepositoryImpl) FindProjectCategoryByUserID(ctx context.Context, userId string) ([]*entities.ProjectCategorySummary, error) {
 
 	if userId == "" {
