@@ -35,44 +35,94 @@ func (r *projectsRepositoryImpl) FindByUserID(ctx context.Context, userId string
 	// Base query dengan agregasi
 	query := r.db.WithContext(ctx).
 		Table("projects p").
-		Select(`
-            p.id AS project_id,
-            p.user_id,
-            p.name,
-            p.budget,
-            p.is_completed,
-            p.category_name,
-            p.start_date,
-            p.end_date,
-            p.created_at,
-            COUNT(DISTINCT pt.id) AS total_todolist,
-            COUNT(DISTINCT CASE WHEN pti.is_completed = true THEN pti.id END) AS total_todolist_item_done,
-            COUNT(DISTINCT pti.id) AS total_todolist_item,
-            COUNT(DISTINCT pe.id) AS total_expenses,
-            CASE
-                WHEN COUNT(DISTINCT pti.id) = 0 THEN 0
-                ELSE ROUND(
-                    (COUNT(DISTINCT CASE WHEN pti.is_completed = true THEN pti.id END)::NUMERIC /
-                     NULLIF(COUNT(DISTINCT pti.id), 0)) * 100,
-                    2
-                )
-            END AS completion_percentage
-        `).
-		Joins("LEFT JOIN project_todolists pt ON p.id = pt.project_id").
-		Joins("LEFT JOIN project_todolist_items pti ON pt.id = pti.project_todolist_id").
-		Joins("LEFT JOIN project_expenses pe ON p.id = pe.project_id").
-		Where("p.user_id = ?", userId).
-		Group(`
-            p.id,
-            p.user_id,
-            p.name,
-            p.budget,
-            p.is_completed,
-            p.category_name,
-            p.start_date,
-            p.end_date,
-            p.created_at
-        `)
+		Raw(`
+			WITH todolist_stats AS (
+			    SELECT
+			        p.id AS project_id,
+			        COUNT(DISTINCT pt.id) AS total_todolist,
+			        COUNT(pti.id) AS total_todolist_item,
+			        COUNT(*) FILTER (WHERE pti.is_completed = true) AS total_todolist_item_done
+			    FROM projects p
+			    LEFT JOIN project_todolists pt ON p.id = pt.project_id
+			    LEFT JOIN project_todolist_items pti ON pt.id = pti.project_todolist_id
+			    WHERE p.user_id = 'c020b589-d9c4-493d-9dca-d0c0943224e7'
+			    GROUP BY p.id
+			),
+			expense_stats AS (
+			    SELECT
+			        p.id AS project_id,
+			        COUNT(pe.id) AS total_expenses
+			    FROM projects p
+			    LEFT JOIN project_expenses pe ON p.id = pe.project_id
+			    WHERE p.user_id = 'c020b589-d9c4-493d-9dca-d0c0943224e7'
+			    GROUP BY p.id
+			)
+			SELECT
+			    p.id AS project_id,
+			    p.user_id,
+			    p.name,
+			    p.budget,
+			    p.is_completed,
+			    p.category_name,
+			    p.start_date,
+			    p.end_date,
+			    p.created_at,
+			    COALESCE(ts.total_todolist, 0) AS total_todolist,
+			    COALESCE(ts.total_todolist_item_done, 0) AS total_todolist_item_done,
+			    COALESCE(ts.total_todolist_item, 0) AS total_todolist_item,
+			    COALESCE(es.total_expenses, 0) AS total_expenses,
+			    CASE
+			        WHEN COALESCE(ts.total_todolist_item, 0) = 0 THEN 0
+			        ELSE ROUND(
+			            (ts.total_todolist_item_done::NUMERIC /
+			             NULLIF(ts.total_todolist_item, 0)) * 100,
+			            2
+			        )
+			    END AS completion_percentage
+			FROM projects p
+			LEFT JOIN todolist_stats ts ON p.id = ts.project_id
+			LEFT JOIN expense_stats es ON p.id = es.project_id
+			WHERE p.user_id = 'c020b589-d9c4-493d-9dca-d0c0943224e7'
+			ORDER BY p.created_at DESC;
+			`, userId)
+		// Select(`
+		//           p.id AS project_id,
+		//           p.user_id,
+		//           p.name,
+		//           p.budget,
+		//           p.is_completed,
+		//           p.category_name,
+		//           p.start_date,
+		//           p.end_date,
+		//           p.created_at,
+		//           COUNT(DISTINCT pt.id) AS total_todolist,
+		//           COUNT(DISTINCT CASE WHEN pti.is_completed = true THEN pti.id END) AS total_todolist_item_done,
+		//           COUNT(DISTINCT pti.id) AS total_todolist_item,
+		//           COUNT(DISTINCT pe.id) AS total_expenses,
+		//           CASE
+		//               WHEN COUNT(DISTINCT pti.id) = 0 THEN 0
+		//               ELSE ROUND(
+		//                   (COUNT(DISTINCT CASE WHEN pti.is_completed = true THEN pti.id END)::NUMERIC /
+		//                    NULLIF(COUNT(DISTINCT pti.id), 0)) * 100,
+		//                   2
+		//               )
+		//           END AS completion_percentage
+		//       `).
+		// Joins("LEFT JOIN project_todolists pt ON p.id = pt.project_id").
+		// Joins("LEFT JOIN project_todolist_items pti ON pt.id = pti.project_todolist_id").
+		// Joins("LEFT JOIN project_expenses pe ON p.id = pe.project_id").
+		// Where("p.user_id = ?", userId).
+		// Group(`
+		//           p.id,
+		//           p.user_id,
+		//           p.name,
+		//           p.budget,
+		//           p.is_completed,
+		//           p.category_name,
+		//           p.start_date,
+		//           p.end_date,
+		//           p.created_at
+		//       `)
 
 	// Search filter
 	if params.Search != "" {
