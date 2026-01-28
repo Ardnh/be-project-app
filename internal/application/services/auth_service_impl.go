@@ -44,6 +44,12 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *dto.LoginDto) (*string
 		return nil, nil, err
 	}
 
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		// Password salah
+		return nil, nil, domain.ErrInvalidCredentials
+	}
+
 	// Generate jwt token
 	// Load config
 	config := config.LoadConfig()

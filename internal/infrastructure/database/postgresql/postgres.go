@@ -13,6 +13,7 @@ import (
 
 // NewPostgresDB membuat koneksi ke PostgreSQL
 func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
+
 	// Setup GORM logger
 	gormLogger := logger.Default
 	if cfg.App.Env == "production" {

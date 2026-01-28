@@ -17,8 +17,6 @@ type userRepositoryImpl struct {
 	redis *redis.Client
 }
 
-// Constructor yang return INTERFACE dari domain
-// ⬇️ Return type adalah INTERFACE dari domain
 func NewUserRepository(db *gorm.DB, redis *redis.Client) repositories.UserRepository {
 	return &userRepositoryImpl{
 		db:    db,
