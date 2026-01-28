@@ -37,7 +37,6 @@ func (r *projectsService) GetProjectsByUserID(ctx context.Context, userId string
 	}
 
 	projectsDto := mapper.ToProjectsByUserDTO(projects)
-
 	return projectsDto, nil
 }
 
