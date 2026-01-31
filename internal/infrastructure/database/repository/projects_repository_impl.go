@@ -15,14 +15,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// Struct implementasi (private, lowercase)
 type projectsRepositoryImpl struct {
 	db    *gorm.DB
 	redis *redis.Client
 }
 
-// Constructor yang return INTERFACE dari domain
-// ⬇️ Return type adalah INTERFACE dari domain
 func NewProjectsRepository(db *gorm.DB, redis *redis.Client) repositories.ProjectsRepository {
 	return &projectsRepositoryImpl{
 		db:    db,

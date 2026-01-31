@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"time"
+
 	"github.com/Ardnh/be-project-app/internal/application/dto"
 	"github.com/Ardnh/be-project-app/internal/domain/entities"
 	date_utils "github.com/Ardnh/be-project-app/internal/utils/date"
@@ -68,6 +70,11 @@ func ToProjectsByUserDTO(entities []*entities.ProjectsByUserId) []*dto.ProjectsB
 }
 
 func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.ProjectWithTodolistAndExpensesDto {
+
+	if project == nil {
+		return nil
+	}
+
 	// Length 0, capacity 3
 	expenses := make([]*dto.ProjectsExpensesDto, 0, len(project.ProjectExpenses))
 	todolists := make([]*dto.ProjectTodolistsDto, 0, len(project.ProjectTodolists))
@@ -95,12 +102,16 @@ func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.Projec
 	var startDate, endDate string
 
 	if project.StartDate != nil {
-		startDate = project.StartDate.Format("2006-01-02")
+		startDate = project.StartDate.Format(time.RFC3339)
 	}
 
 	if project.EndDate != nil {
-		endDate = project.EndDate.Format("2006-01-02")
+		endDate = project.EndDate.Format(time.RFC3339)
 	}
+
+	// Hitung sisa hari hinggal deadline
+	daysRemaining := date_utils.CalculateDaysRemaining(endDate)
+	daysRemainingStatus := date_utils.GetDaysRemainingStatus(daysRemaining)
 
 	return &dto.ProjectWithTodolistAndExpensesDto{
 		ID:                         project.ID,
@@ -113,6 +124,8 @@ func ToProjectWithTodolistAndExpensesDTO(project *entities.Projects) *dto.Projec
 		CategoryName:               project.CategoryName,
 		TotalTodolistItem:          totalTodolistItem,
 		TotalTodolistCompletedItem: totalTodolistCompletedItem,
+		DaysRemaining:              daysRemaining,
+		DaysRemainingStatus:        daysRemainingStatus,
 		ProjectExpenses:            expenses,
 		ProjectTodolist:            todolists,
 	}

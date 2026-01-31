@@ -22,6 +22,8 @@ type ProjectWithTodolistAndExpensesDto struct {
 	BudgetUsed                 float64                `json:"budget_used" validate:"required"`
 	TotalTodolistItem          int                    `json:"total_todolist_item" validate:"required"`
 	TotalTodolistCompletedItem int                    `json:"total_todolist_completed_item" validate:"required"`
+	DaysRemaining              int                    `json:"days_remaining"`
+	DaysRemainingStatus        string                 `json:"days_remaining_status"`
 	ProjectExpenses            []*ProjectsExpensesDto `json:"project_expenses" validate:"required"`
 	ProjectTodolist            []*ProjectTodolistsDto `json:"project_todolists" validate:"required"`
 }
